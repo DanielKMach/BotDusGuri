@@ -12,13 +12,15 @@ from os import getenv, environ
 from ast import literal_eval
 from game_list import GameList
 
+bot_config = json.loads(getenv("BDG_CONFIG"))
+
 voice_channel_id = 744991248284254283
 text_channel_id = 786810994630328330
 
 print("Loading discord client...")
 bot = discord.ext.commands.Bot(command_prefix="/")
 print("Connecting to mongo database...")
-mongo_client = pymongo.MongoClient('mongodb+srv://BotDusGuri:BotDusGuri2021@danibot.msufk.mongodb.net/DaniBot?retryWrites=true&w=majority')
+mongo_client = pymongo.MongoClient(bot_config["mongo_uri"])
 mongo_collection = mongo_client["BotDusGuri"]["default"]
 print("Loading discord slash commands...")
 slash = SlashCommand(bot, sync_commands=True)
@@ -138,17 +140,9 @@ async def ping(ctx):
 @slash.slash(
     name="lista_de_jogos",
     description="Lista de Jogos - Visualize a lista de jogos disponiveis para jogar",
-    options=[
-        create_option(
-            name="pesquisar",
-            description="Um pedaço ou um nome usado para facilitar a visualização",
-            option_type=3,
-            required=False
-        )
-    ],
     guild_ids=allowed_guilds
 )
-async def lista_de_jogos(ctx, pesquisar=""):
+async def lista_de_jogos(ctx):
     message = ""
     game_names = game_list.get_name_list()
     game_ratings = game_list.get_rating_median_list()
@@ -166,7 +160,7 @@ async def lista_de_jogos(ctx, pesquisar=""):
         message += "\n"
 
     list_embed = discord.Embed(
-        title="Jogos na Lista",
+        title="Lista de Jogos",
         description=message,
         color=0x0090eb
     )
@@ -535,4 +529,4 @@ async def arquivos(ctx, operação, json_obj=""):
         return
 
 print("Initializing bot...")
-bot.run(getenv("BDG_TOKEN"))
+bot.run(bot_config["token"])
