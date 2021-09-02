@@ -1,5 +1,6 @@
 import discord
 import asyncio
+import pymongo
 import json
 import math
 from random import randint
@@ -14,7 +15,12 @@ from game_list import GameList
 voice_channel_id = 744991248284254283
 text_channel_id = 786810994630328330
 
+print("Loading discord client...")
 bot = discord.ext.commands.Bot(command_prefix="/")
+print("Connecting to mongo database...")
+mongo_client = pymongo.MongoClient('mongodb+srv://BotDusGuri:BotDusGuri2021@danibot.msufk.mongodb.net/DaniBot?retryWrites=true&w=majority')
+mongo_collection = mongo_client["BotDusGuri"]["default"]
+print("Loading discord slash commands...")
 slash = SlashCommand(bot, sync_commands=True)
 game_list: GameList
 text_channel: discord.TextChannel
@@ -34,15 +40,24 @@ default_permissions = [
 
 
 def save_gamelist():
+    print("Saving gamelist...")
     global game_list
-    with open("games.json", mode="w", encoding="UTF-8") as file:
-        file.write(json.dumps({"games": game_list._games}, indent=4, sort_keys=True))
+    mongo_collection.update_one(
+        {"_name": "games"},
+        {'$set': {"games": game_list._games}},
+        upsert=True
+    )
+
 
 def load_gamelist():
+    print("Loading gamelist...")
     global game_list
-    with open("games.json", mode="r", encoding="UTF-8") as file:
-        games = json.loads(file.read()).get("games", [])
-    game_list = GameList(games=games)
+    doc = mongo_collection.find_one({"_name": "games"})
+    if doc == None:
+        game_list = GameList()
+    else:
+        game_list = GameList(games=doc["games"])
+
 
 load_gamelist()
 
@@ -122,7 +137,7 @@ async def ping(ctx):
 
 @slash.slash(
     name="lista_de_jogos",
-    description="Envia a lista de jogos para jogar",
+    description="Lista de Jogos - Visualize a lista de jogos disponiveis para jogar",
     options=[
         create_option(
             name="pesquisar",
@@ -160,7 +175,7 @@ async def lista_de_jogos(ctx, pesquisar=""):
 
 @slash.slash(
     name="ver_jogo",
-    description="Veja mais detalhes sobre um jogo especifico",
+    description="Lista de Jogos - Veja mais detalhes sobre um jogo especifico",
     options=[
         create_option(
             name="nome_do_jogo",
@@ -182,12 +197,19 @@ async def ver_jogo(ctx, nome_do_jogo):
 
     icon = game_list.get_icon(game_index)
     if icon != "":
-        print("There is icon")
-        game_embed.set_thumbnail(url=icon+".png")
+        game_embed.set_thumbnail(url=icon)
 
     source = game_list.get_source(game_index)
     if source != None:
         game_embed.url = source
+
+    added_by = game_list.get_added_by(game_index)
+    if added_by != None:
+        added_by_user = await bot.fetch_user(added_by)
+        game_embed.set_footer(
+            icon_url=added_by_user.avatar_url,
+            text="Jogo adicionado por " + added_by_user.display_name
+        )
 
     ratings = game_list.get_ratings(game_index)
     if len(ratings) != 0:
@@ -209,7 +231,7 @@ async def ver_jogo(ctx, nome_do_jogo):
 
 @slash.slash(
     name="adicionar_jogo",
-    description="Adiciona um jogo",
+    description="Lista de Jogos - Adicione um jogo à lista",
     options=[
         create_option(
             name="nome_do_jogo",
@@ -235,7 +257,7 @@ async def adicionar_jogo(ctx, nome_do_jogo):
 
 @slash.slash(
     name="remover_jogo",
-    description="Remove um jogo",
+    description="Lista de Jogos - Remova um jogo à lista",
     options=[
         create_option(
             name="nome_do_jogo",
@@ -262,7 +284,7 @@ async def remover_jogo(ctx, nome_do_jogo):
 
 @slash.slash(
     name="avaliar_jogo",
-    description="Avalie um jogo!",
+    description="Lista de Jogos - Dê uma nota e sua opinião sobre um jogo!",
     options=[
         create_option(
             name="nome_do_jogo",
@@ -298,11 +320,11 @@ async def avaliar_jogo(ctx, nome_do_jogo, nota, opinião=None):
         game_list.index_of(nome_do_jogo), ctx.author.id, nota, opinion=opinião
     )
     save_gamelist()
-    await ctx.send(f":star: | Você avaliou o jogo **{nome_do_jogo}** com `{str(nota)}/10`!")
+    await ctx.send(f":star: | **{ctx.author.display_name}** avaliou o jogo **{nome_do_jogo}** com `{str(nota)}/10`!")
 
 @slash.slash(
     name="definir_fonte",
-    description="Define um link como a fonte de um jogo",
+    description="Lista de Jogos - Define um link como a fonte de um jogo",
     options=[
         create_option(
             name="nome_do_jogo",
@@ -333,7 +355,7 @@ async def definir_fonte(ctx, nome_do_jogo, fonte):
 
 @slash.slash(
     name="definir_icone",
-    description="Define um link como o ícone de um jogo",
+    description="Lista de Jogos - Define um link como o ícone de um jogo",
     options=[
         create_option(
             name="nome_do_jogo",
@@ -364,7 +386,7 @@ async def definir_icone(ctx, nome_do_jogo, link):
 
 @slash.slash(
     name="definir_nome",
-    description="Renomeie algum jogo que você nomeou errado",
+    description="Lista de Jogos - Renomeie algum jogo que você nomeou errado",
     options=[
         create_option(
             name="nome_do_jogo",
@@ -399,7 +421,7 @@ async def definir_nome(ctx, nome_do_jogo, novo_nome):
 
 @slash.slash(
     name="sortear_jogo",
-    description="Sorteie um jogo aleatório que ainda não foi avaliado",
+    description="Lista de Jogos - Sorteie um jogo aleatório que ainda não foi avaliado",
     guild_ids=allowed_guilds
 )
 async def sortear_jogo(ctx):
@@ -491,7 +513,11 @@ async def arquivos(ctx, operação, json_obj=""):
     global game_list
     if operação == "exportar":
         load_gamelist()
-        await ctx.send(f":pencil: | Aqui está os meus dados\n```json\n{json.dumps({'games': game_list._games}, indent=0, sort_keys=True)}\n```")
+        json_obj = {
+            "_name": "games",
+            "games": game_list._games
+        }
+        await ctx.send(f":pencil: | Aqui está os meus dados\n```json\n{json.dumps(json_obj)}\n```")
         return
 
     if operação == "importar":
@@ -508,4 +534,5 @@ async def arquivos(ctx, operação, json_obj=""):
         
         return
 
+print("Initializing bot...")
 bot.run(getenv("BDG_TOKEN"))

@@ -8,11 +8,17 @@ class GameList:
         self._games = games
 
 
-    def create_game(self, name="Random Game", source=None):
-        self._games.append({
-            "name": name,
-            "source": source
-        })
+    def create_game(self, name, source=None, added_by=None):
+        game = {
+            "name": name
+        }
+        if source != None:
+            game["source"] = source
+
+        if added_by != None:
+            game["added_by"] = added_by
+
+        self._games.append(game)
 
     def remove_game(self, index):
         _games.remove_at(index)
@@ -66,6 +72,9 @@ class GameList:
 
     def get_source(self, index):
         return self._games[index].get("source", None)
+
+    def get_added_by(self, index):
+        return self._games[index].get("added_by", None)
 
     def set_source(self, index, source):
         self._games[index]["source"] = source
