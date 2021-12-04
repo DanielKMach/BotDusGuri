@@ -21,7 +21,10 @@ class GameList:
         self._games.append(game)
 
     def remove_game(self, index):
-        _games.remove_at(index)
+        del(self._games[index])
+
+    def sort(self):
+        self._games = sorted(self._games, key=lambda k: k['name'])
 
     def rate_game(self, index, author, rating, opinion=None):
         rating = max(min(rating, 10), 0)
@@ -70,6 +73,9 @@ class GameList:
     def get_ratings(self, index):
         return self._games[index].get("ratings", [])
 
+    def has_been_rated(self, index):
+        return len(self.get_ratings(index)) > 0
+
     def get_source(self, index):
         return self._games[index].get("source", None)
 
@@ -80,7 +86,7 @@ class GameList:
         self._games[index]["source"] = source
 
     def get_icon(self, index):
-        return self._games[index].get("icon", "")
+        return self._games[index].get("icon", None)
 
     def set_icon(self, index, icon_source):
         self._games[index]["icon"] = icon_source
@@ -105,6 +111,13 @@ class GameList:
 
         return ratings_meds
 
+    def has_user_rated_game(self, index, user_id):
+        game_ratings = self.get_ratings(index)
+        for rating in game_ratings:
+            if rating["author"] == user_id:
+                return True
+        return False
+
     def get_choices(self):
         choices = []
         
@@ -115,8 +128,51 @@ class GameList:
                     value=self._games[i]["name"],
                 )
             )
+
+        if len(self._games) < 1:
+            choices.append(
+                create_choice(
+                    name="Inválido",
+                    value="Invalid",
+                )
+            )
         
         return choices
 
     def to_string(self):
         return str(self._games)
+
+    
+    def load_json(self, json_obj={}):
+        if type(json_obj.get("games", None)) == list:
+            self._games = json_obj["games"]
+
+    def get_json(self):
+        return {"_name": "games", "games": self._games}
+
+    def set_mongo_collection(self, mongo_collection, search_filter={"_name": "games"}):
+        self._mongo_collection = mongo_collection
+        self._search_filter = search_filter
+
+    def save_to_mongo(self):
+        print("Saving gamelist to collection...")
+        self._mongo_collection.update_one(
+            self._search_filter,
+            {'$set': {"games": self._games}},
+            upsert=True
+        )
+
+    def load_from_mongo(self):
+        print("Loading gamelist from collection...")
+        doc = self._mongo_collection.find_one(self._search_filter)
+        if doc != None:
+            self.load_json(doc)
+
+
+
+def build_gamelist(mongo_collection):
+    gamelist = GameList()
+    gamelist.set_mongo_collection(mongo_collection)
+    gamelist.load_from_mongo()
+
+    return gamelist
