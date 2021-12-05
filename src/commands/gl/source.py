@@ -22,11 +22,7 @@ class SetSourceCommand:
                     required=True
                 )
             ],
-            guild_ids=e.allowed_guilds
-        )
-        @e.slash.permission(
-            guild_id=e.allowed_guilds[0],
-            permissions=e.default_permissions
+            guild_ids=e.allowed_guilds["gamelist"]
         )
         async def definir_fonte(ctx, nome_do_jogo, fonte):
             e.gamelist.set_source(e.gamelist.index_of(nome_do_jogo), fonte.lower())

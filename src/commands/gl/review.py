@@ -27,7 +27,7 @@ class ReviewGameCommand:
                     required=False
                 )
             ],
-            guild_ids=e.allowed_guilds
+            guild_ids=e.allowed_guilds["gamelist"]
         )
         async def avaliar_jogo(ctx, nome_do_jogo, nota, opinião=None):
             try:

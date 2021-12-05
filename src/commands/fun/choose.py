@@ -17,8 +17,7 @@ class ChooseCommand:
                     option_type=3,
                     required=True
                 ),
-            ],
-            guild_ids=e.allowed_guilds
+            ]
         )
         async def escolher(ctx, escolhas):
 

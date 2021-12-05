@@ -18,11 +18,7 @@ class AddGameCommand:
                     required=True
                 )
             ],
-            guild_ids=e.allowed_guilds
-        )
-        @e.slash.permission(
-            guild_id=e.allowed_guilds[0],
-            permissions=e.default_permissions
+            guild_ids=e.allowed_guilds["gamelist"]
         )
         async def adicionar_jogo(ctx, nome_do_jogo):
 

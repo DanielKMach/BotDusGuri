@@ -7,7 +7,7 @@ class SurpriseGameCommand:
         @e.slash.slash(
             name="sortear_jogo",
             description="Lista de Jogos - Sorteie um jogo aleatório que ainda não foi avaliado",
-            guild_ids=e.allowed_guilds
+            guild_ids=e.allowed_guilds["gamelist"]
         )
         async def sortear_jogo(ctx):
             games = e.gamelist.get_name_list()

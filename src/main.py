@@ -20,10 +20,10 @@ def load_profile(file):
             profile = json.loads(file.read())
 
     if profile.get("config", None) != None:
-        if type(profile["config"]) == str:
+        if type(profile["config"]) == str: # Se a "config" for uma string, pega as configs da variavel do ambiente com este nome.
             bot_config = json.loads(getenv("BDG_CONFIG"))
 
-        elif type(profile["config"]) == dict:
+        elif type(profile["config"]) == dict: # Se for um dict só carrega este dict como as configs.
             bot_config = profile["config"]
 
         else:
@@ -36,7 +36,7 @@ def connect_to_mongo_database(mongo_uri):
     global mongo_client
     global mongo_collection
 
-    print("Connecting to mongo database...")
+    print("Conectando ao mongo database...")
     if mongo_uri != None and mongo_uri != "":
         mongo_client = pymongo.MongoClient(mongo_uri)
         mongo_collection = mongo_client["BotDusGuri"]["default"]
@@ -45,13 +45,13 @@ def instantiate_bot():
     global bot
     global slash
 
-    print("Loading discord client and slash commands...")
+    print("Carregando discord client e slash commands...")
     bot = discord.ext.commands.Bot(command_prefix="/")
     slash = SlashCommand(bot, sync_commands=True)
 
     @bot.event
     async def on_ready():
-        game = discord.Game(profile.get("game", "Online"))
+        game = discord.Game(f"{profile.get('game', 'Online')} v{profile.get('bot_version', '404')}")
         await bot.change_presence(status=discord.Status[profile.get("status", "online").lower()], activity=game)
         print("I'm ready")
 
@@ -61,7 +61,7 @@ def build_permissions():
     global allowed_guilds
     global default_permissions
 
-    allowed_guilds = [744991248284254278]
+    allowed_guilds = profile["allowed_guilds"]
     default_permissions = [
         create_permission(
             id=867858666525949972,
@@ -76,7 +76,7 @@ def build_permissions():
     ]
 
 def instantiate_gamelist():
-    print("Building gamelist...")
+    print("Carregando gamelist...")
     global gamelist
 
     gamelist = game_list.build_gamelist(mongo_collection)
@@ -164,7 +164,7 @@ def start():
     build_commands(base_event)
     build_triggers(base_event)
 
-    print("Initializing bot...")
+    print("Inicializando bot...")
     bot.run(bot_config["token"])
 
 async def close_bot(bot):

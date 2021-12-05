@@ -53,14 +53,17 @@ class DebugCommand:
                     option_type=3,
                     required=False
                 )
-            ],
-            guild_ids=e.allowed_guilds
+            ]
         )
-        @e.slash.permission(
-            guild_id=e.allowed_guilds[0],
-            permissions=e.default_permissions
-        )
+        #@e.slash.permission(
+        #    guild_id=e.allowed_guilds[0],
+        #    permissions=e.default_permissions
+        #)
         async def debug(ctx, operação, argumento=""):
+            if ctx.author.id != 293506597093900288 and ctx.author.id != 440254029734477865:
+                await ctx.send(":no_entry_sign: | Você não tem permissão para executar este comando")
+                return
+
             if operação == "exportar_gamelist":
                 json_obj = e.gamelist.get_json()
                 await ctx.send(f":pencil: | Aqui está os dados da Gamelist\n```json\n{dumps(json_obj)}\n```")

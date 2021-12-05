@@ -17,7 +17,7 @@ class GameCommand:
                     choices=e.gamelist.get_choices()
                 )
             ],
-            guild_ids=e.allowed_guilds
+            guild_ids=e.allowed_guilds["gamelist"]
         )
         async def ver_jogo(ctx, nome_do_jogo):
             game_index = e.gamelist.index_of(nome_do_jogo)

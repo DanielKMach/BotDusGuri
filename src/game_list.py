@@ -155,7 +155,7 @@ class GameList:
         self._search_filter = search_filter
 
     def save_to_mongo(self):
-        print("Saving gamelist to collection...")
+        print("Salvando gamelist para a coleção...")
         self._mongo_collection.update_one(
             self._search_filter,
             {'$set': {"games": self._games}},
@@ -163,7 +163,7 @@ class GameList:
         )
 
     def load_from_mongo(self):
-        print("Loading gamelist from collection...")
+        print("Carregando gamelist da coleção...")
         doc = self._mongo_collection.find_one(self._search_filter)
         if doc != None:
             self.load_json(doc)

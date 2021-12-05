@@ -16,11 +16,7 @@ class RemoveGameCommand:
                     choices=e.gamelist.get_choices()
                 )
             ],
-            guild_ids=e.allowed_guilds
-        )
-        @e.slash.permission(
-            guild_id=e.allowed_guilds[0],
-            permissions=e.default_permissions
+            guild_ids=e.allowed_guilds["gamelist"]
         )
         async def remover_jogo(ctx, nome_do_jogo):
             e.gamelist.remove_game(

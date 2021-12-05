@@ -15,8 +15,7 @@ class CalculateCommand:
                     option_type=3,
                     required=True
                 ),
-            ],
-            guild_ids=e.allowed_guilds
+            ]
         )
         async def calculo(ctx, expressão):
             try:

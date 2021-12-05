@@ -7,7 +7,7 @@ class GameListCommand:
         @e.slash.slash(
             name="lista_de_jogos",
             description="Lista de Jogos - Visualize a lista de jogos disponiveis para jogar",
-            guild_ids=e.allowed_guilds
+            guild_ids=e.allowed_guilds["gamelist"]
         )
         async def lista_de_jogos(ctx):
 
