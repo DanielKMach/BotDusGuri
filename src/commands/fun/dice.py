@@ -7,8 +7,8 @@ class DiceCommand:
 
         @e.slash.slash(
             name="dado",
-            description="Um dado de 6 lados"
-            #guild_ids=e.allowed_guilds
+            description="Um dado de 6 lados",
+            guild_ids=e.allowed_guilds["default"]
         )
         async def dado(ctx):
             num = randint(1, 6)

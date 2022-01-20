@@ -21,8 +21,8 @@ class RollCommand:
                     option_type=4,
                     required=False
                 ),
-            ]
-            #guild_ids=e.allowed_guilds
+            ],
+            guild_ids=e.allowed_guilds["default"]
         )
         async def roleta(ctx, mínimo=1, máximo=10):
             await ctx.send(f":game_die: | A roleta entre `{mínimo}` e `{máximo}` deu... **{randint(mínimo, máximo)}**!")

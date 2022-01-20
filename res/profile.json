@@ -2,9 +2,5 @@
     "config": "BDG_CONFIG",
     "status": "online",
     "game": "Online!",
-    "bot_version": "2.2",
-
-    "allowed_guilds": {
-        "gamelist": [744991248284254278]
-    }
+    "bot_version": "2.3"
 }

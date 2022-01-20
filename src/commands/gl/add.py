@@ -1,6 +1,5 @@
 from discord_slash.utils.manage_commands import create_option
 from discord_slash.utils.manage_commands import remove_all_commands
-from main import build_commands, remove_all_commands
 from asyncio import sleep
 
 class AddGameCommand:

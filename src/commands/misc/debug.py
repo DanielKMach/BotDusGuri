@@ -1,7 +1,7 @@
 from discord_slash.utils.manage_commands import create_option, create_choice
 from discord_slash.utils.manage_components import create_button, create_actionrow, wait_for_component, ButtonStyle
 from json import loads, dumps
-from main import close_bot
+from discord_slash.utils.manage_commands import remove_all_commands
 
 class DebugCommand:
 
@@ -53,12 +53,9 @@ class DebugCommand:
                     option_type=3,
                     required=False
                 )
-            ]
+            ],
+            guild_ids=e.allowed_guilds["default"]
         )
-        #@e.slash.permission(
-        #    guild_id=e.allowed_guilds[0],
-        #    permissions=e.default_permissions
-        #)
         async def debug(ctx, operação, argumento=""):
             if ctx.author.id != 293506597093900288 and ctx.author.id != 440254029734477865:
                 await ctx.send(":no_entry_sign: | Você não tem permissão para executar este comando")
@@ -145,7 +142,8 @@ class DebugCommand:
                 button_ctx: ComponentContext = await wait_for_component(e.bot, components=action_row)
                 if button_ctx.custom_id == "sim":
                     await confirm_msg.edit(content=":warning: | Desligando...", components=[])
-                    await close_bot(e.bot)
+                    await remove_all_commands(e.bot.user.id, e.bot_config["token"], guild_ids=e.allowed_guilds["default"])
+                    await e.bot.close()
                     return
 
                 if button_ctx.custom_id == "nao":

@@ -7,7 +7,7 @@ import json
 from os import getenv
 from os.path import exists
 from discord_slash import SlashCommand
-from discord_slash.utils.manage_commands import create_permission, remove_all_commands
+from discord_slash.utils.manage_commands import create_permission
 
 # Importing commands
 
@@ -61,7 +61,9 @@ def build_permissions():
     global allowed_guilds
     global default_permissions
 
-    allowed_guilds = profile["allowed_guilds"]
+    doc = mongo_collection.find_one({"_name": "allowed_guilds"})
+    allowed_guilds = doc["allowed_guilds"]
+    print(allowed_guilds)
     default_permissions = [
         create_permission(
             id=867858666525949972,
@@ -92,22 +94,6 @@ def create_base_event():
         gamelist,
         default_permissions
     )
-
-def remove_all_commands(bot):
-    bot.remove_command("calculo")
-    bot.remove_command("escolher")
-    bot.remove_command("roleta")
-    bot.remove_command("adicionar_jogo")
-    bot.remove_command("ver_jogo")
-    bot.remove_command("definir_icone")
-    bot.remove_command("lista_de_jogos")
-    bot.remove_command("definir_nome")
-    bot.remove_command("remover_jogo")
-    bot.remove_command("avaliar_jogo")
-    bot.remove_command("definir_fonte")
-    bot.remove_command("sortear_jogo")
-    bot.remove_command("ping")
-    bot.remove_command("debug")
 
 def build_commands(base_event):
     from commands.fun.calc import CalculateCommand
@@ -170,13 +156,6 @@ def start():
 
     print("Inicializando bot...")
     bot.run(bot_config["token"])
-
-async def close_bot(bot):
-    #remove_all_commands(bot)
-    await bot.close()
-
-
-
 
 if __name__ == "__main__":
     start()
