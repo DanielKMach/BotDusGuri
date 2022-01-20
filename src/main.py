@@ -112,6 +112,7 @@ def remove_all_commands(bot):
 def build_commands(base_event):
     from commands.fun.calc import CalculateCommand
     from commands.fun.choose import ChooseCommand
+    from commands.fun.dice import DiceCommand
     from commands.fun.roll import RollCommand
     from commands.gl.add import AddGameCommand
     from commands.gl.game import GameCommand
@@ -128,6 +129,7 @@ def build_commands(base_event):
     print("Initializing commands...")
     CalculateCommand(base_event)
     ChooseCommand(base_event)
+    DiceCommand(base_event)
     RollCommand(base_event)
 
     AddGameCommand(base_event)
@@ -145,9 +147,11 @@ def build_commands(base_event):
 
 def build_triggers(base_event):
     from triggers.voice_join import VoiceJoinTrigger
+    #from triggers.microbit import MicrobitMessageTrigger
 
     print("Inicializando gatilhos...")
     VoiceJoinTrigger(base_event)
+    #MicrobitMessageTrigger(base_event)
 
 
 def start():

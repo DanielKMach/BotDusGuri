@@ -130,12 +130,12 @@ class DebugCommand:
                     create_button(
                         style=ButtonStyle.red,
                         label="Sim, tenho certeza",
-                        custom_id="00"
+                        custom_id="sim"
                     ),
                     create_button(
                         style=ButtonStyle.green,
                         label="Não, cancelar",
-                        custom_id="01"
+                        custom_id="nao"
                     )
                 ]
                 action_row = create_actionrow(*buttons)
@@ -143,12 +143,12 @@ class DebugCommand:
                 confirm_msg = await ctx.send(":warning: | Você tem certeza que deseja me desligar?", components=[action_row])
 
                 button_ctx: ComponentContext = await wait_for_component(e.bot, components=action_row)
-                if button_ctx.custom_id == "00":
+                if button_ctx.custom_id == "sim":
                     await confirm_msg.edit(content=":warning: | Desligando...", components=[])
                     await close_bot(e.bot)
                     return
 
-                if button_ctx.custom_id == "01":
+                if button_ctx.custom_id == "nao":
                     await confirm_msg.delete()
                     return
             
