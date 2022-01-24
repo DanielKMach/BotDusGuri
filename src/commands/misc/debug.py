@@ -141,8 +141,11 @@ class DebugCommand:
 
                 button_ctx: ComponentContext = await wait_for_component(e.bot, components=action_row)
                 if button_ctx.custom_id == "sim":
+                    print("Preparando para o desligamento")
                     await confirm_msg.edit(content=":warning: | Desligando...", components=[])
+                    print("Removendo todos os comandos...")
                     await remove_all_commands(e.bot.user.id, e.bot_config["token"], guild_ids=e.allowed_guilds["default"])
+                    print("Desligando...")
                     await e.bot.close()
                     return
 

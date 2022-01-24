@@ -63,7 +63,6 @@ def build_permissions():
 
     doc = mongo_collection.find_one({"_name": "allowed_guilds"})
     allowed_guilds = doc["allowed_guilds"]
-    print(allowed_guilds)
     default_permissions = [
         create_permission(
             id=867858666525949972,

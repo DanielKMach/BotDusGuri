@@ -2,6 +2,7 @@ from discord_slash.utils.manage_commands import create_option, create_choice
 from discord import Embed
 from requests import request
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 
 class MetaCommand:
 
@@ -25,19 +26,19 @@ class MetaCommand:
         "bounty": 0x01CFFF,
         "hotZone": 0xE33C50,
         "knockout": 0xF7831C,
-        "heist": 0x9B3DF3,
-        "siege": 0xF7831C
+        "heist": 0xD65CD3,
+        "siege": 0xF04F32
     }
 
     def __init__(self, e):
 
         @e.slash.slash(
-            name="metas",
-            description="Mostra uma lista dos brawlers metas de cada mapa.",
+            name="meta",
+            description="Mostra uma lista dos brawlers meta de cada modo de jogo",
             options=[
                 create_option(
-                    name="modo",
-                    description="O modo, ex: Futebrawl, Pique-gema, Combate.",
+                    name="modo_de_jogo",
+                    description="O modo de jogo dos Brawlers meta",
                     option_type=3,
                     required=True,
                     choices=[
@@ -80,42 +81,61 @@ class MetaCommand:
                     ]
                 ),
                 create_option(
-                    name="top",
-                    description="Top 5? Top 10? Top 15?",
+                    name="quantidade",
+                    description="A quantidade de Brawlers meta para visualizar",
                     option_type=4,
                     required=False
                 )
             ],
             guild_ids=e.allowed_guilds["default"]
         )
-        async def metas(ctx, modo, top=10):
-            msg = await ctx.send("Processando...")
+        async def metas(ctx, modo_de_jogo, quantidade=10):
+            msg = await ctx.send("*Adquirindo dados...* :game_die:")
 
-            response = request("GET", "https://brawlace.com/meta")
+            html = BeautifulSoup(
+                request("GET", "https://brawlace.com/meta", cookies={"lang": "pt"}).content,
+                "html.parser"
+            )
 
-            soup = BeautifulSoup(response.content, "html.parser")
-
-            div = soup.select_one(f"#gameModeData{modo}")
+            div = html.select_one(f"#gameModeData{modo_de_jogo}")
             table = div.select_one(f"table tbody")
             brawlers = table.find_all("tr")
 
             text = str()
 
-            for i in range(min(len(brawlers), top)):
+            quantidade = max(min(quantidade, len(brawlers)), 3) # Basically clamp(quantidade, 3, len(brawlers))
+
+            for i in range(quantidade):
                 info = brawlers[i].find_all('td')
-                text += f"{str(i+1)}. **{info[1].text}** - `{info[3].text}`\n"
+                brawler_name = info[1].text
+                star_player_porcentage = info[3].text.split(' ')[0] # Formatting from '3.33 %' to '3.33'
+                text += f"{str(i+1)}. **{brawler_name}** - `{star_player_porcentage}%`\n"
 
             embed = Embed(
-                title=f"Metas {self.names[modo]}",
-                color=self.colors[modo],
+                title=f"Top {str(quantidade)} - {self.names.get(modo_de_jogo, 'INDEFINIDO')}",
+                color=self.colors.get(modo_de_jogo, 0xFFFFFF),
                 description=text
             )
 
+            # Setting author to be the brawl ace logo
+            embed.set_author(
+                name="Brawl Ace",
+                url="https://brawlace.com/",
+                icon_url="https://cdn.lag.one/ba/assets/images/icon.png?v=17.2"
+            )
+
+            # Getting the game mode image and defining it the thumbnail.
             img = div.select_one("h3 img")
             embed.set_thumbnail(url=img["src"])
 
-            #last_update = soup.select_one("div.input-group option", selected=True).text
-            #embed.set_footer(text=f"Ultima atualização: {last_update}")
+            # Defining the subtitle
+            embed.set_footer(text="(%) Porcentagem de Craque")
 
-            await msg.delete()
-            await ctx.channel.send(embed=embed)
+            # Getting last updated at time and defining it the timestamp.
+            updated_at = html.select_one("div.input-group option", selected=True).text
+            updated_at = datetime.strptime(updated_at, "%Y-%m-%d %H:%M:%S")
+            updated_at += timedelta(hours=-6) # Converting from GMT+6 to GMT-0
+
+            embed.timestamp = updated_at
+
+            await msg.edit(content="", embed=embed)
