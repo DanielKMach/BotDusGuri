@@ -111,6 +111,7 @@ def build_commands(base_event):
     from commands.gl.surprise import SurpriseGameCommand
     from commands.misc.ping import PingCommand
     from commands.misc.debug import DebugCommand
+    from commands.utilities.metas import MetaCommand
 
     print("Initializing commands...")
     CalculateCommand(base_event)
@@ -130,6 +131,8 @@ def build_commands(base_event):
 
     PingCommand(base_event)
     DebugCommand(base_event)
+
+    MetaCommand(base_event)
 
 def build_triggers(base_event):
     from triggers.voice_join import VoiceJoinTrigger
