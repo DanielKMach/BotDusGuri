@@ -1,4 +1,5 @@
 from discord_slash.utils.manage_commands import create_choice
+from difflib import get_close_matches
 
 class GameList:
 
@@ -45,6 +46,8 @@ class GameList:
 
         self._games[index]["ratings"] = ratings
 
+
+    # Get/Set information functions
     def get_name(self, index):
         return self._games[index]["name"]
 
@@ -91,10 +94,19 @@ class GameList:
     def set_icon(self, index, icon_source):
         self._games[index]["icon"] = icon_source
 
+
+    # Get index functions
     def index_of(self, game_name):
         for i in range(len(self._games)):
             if self._games[i]["name"].lower() == game_name.lower():
                 return i
+
+    def index_of_closest(self, game_name):
+        results = get_close_matches(game_name, self.get_name_list())
+        if len(results) <= 0:
+            return None
+        
+        return self.index_of(results[0])
 
 
     def get_name_list(self):

@@ -1,4 +1,5 @@
 from discord_slash.utils.manage_commands import create_option
+from discord_slash.model import SlashCommandOptionType
 
 class SetIconCommand:
 
@@ -11,22 +12,26 @@ class SetIconCommand:
                 create_option(
                     name="nome_do_jogo",
                     description="O nome do jogo para definir o ícone",
-                    option_type=3,
-                    required=True,
-                    choices=e.gamelist.get_choices()
+                    option_type=SlashCommandOptionType.STRING,
+                    required=True
                 ),
                 create_option(
                     name="link",
-                    description="Um link da internet, provavelmente levando ao Google Play",
-                    option_type=3,
+                    description="O link da imagem para definir como ícone",
+                    option_type=SlashCommandOptionType.STRING,
                     required=True
                 )
             ],
             guild_ids=e.allowed_guilds["gamelist"]
         )
         async def definir_icone(ctx, nome_do_jogo, link):
-            e.gamelist.set_icon(e.gamelist.index_of(nome_do_jogo), link.lower())
+            game_index = e.gamelist.index_of_closest(nome_do_jogo)
+            if game_index == None:
+                await ctx.send(f"Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**")
+                return
 
-            await ctx.send(f":link: | Definido ícone de **{e.gamelist.get_name(e.gamelist.index_of(nome_do_jogo))}**")
+            e.gamelist.set_icon(game_index, link.lower())
+
+            await ctx.send(f":link: | Definido ícone de **{e.gamelist.get_name(game_index)}**")
             e.gamelist.save_to_mongo()
 

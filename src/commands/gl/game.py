@@ -1,5 +1,6 @@
 from discord_slash.utils.manage_commands import create_option
 from discord import Embed
+from discord_slash.model import SlashCommandOptionType
 
 class GameCommand:
 
@@ -12,15 +13,17 @@ class GameCommand:
                 create_option(
                     name="nome_do_jogo",
                     description="O nome do jogo para ver mais sobre ele",
-                    option_type=3,
-                    required=True,
-                    choices=e.gamelist.get_choices()
+                    option_type=SlashCommandOptionType.STRING,
+                    required=True
                 )
             ],
             guild_ids=e.allowed_guilds["gamelist"]
         )
         async def ver_jogo(ctx, nome_do_jogo):
-            game_index = e.gamelist.index_of(nome_do_jogo)
+            game_index = e.gamelist.index_of_closest(nome_do_jogo)
+            if game_index == None:
+                await ctx.send(f"Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**")
+                return
 
             game_embed = Embed(
                 title=e.gamelist.get_name(game_index),
@@ -30,9 +33,6 @@ class GameCommand:
             icon_url = e.gamelist.get_icon(game_index)
             if type(icon_url) == str:
                 game_embed.set_thumbnail(url=icon_url)
-                #game_embed.set_thumbnail(url=ctx.author.avatar_url)
-                print(icon_url)
-                print(ctx.author.avatar_url)
 
             source = e.gamelist.get_source(game_index)
             if type(source) == str:

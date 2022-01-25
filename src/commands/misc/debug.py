@@ -1,7 +1,7 @@
-from discord_slash.utils.manage_commands import create_option, create_choice
+from discord_slash.utils.manage_commands import create_option, create_choice, remove_all_commands
 from discord_slash.utils.manage_components import create_button, create_actionrow, wait_for_component, ButtonStyle
+from discord_slash.model import SlashCommandOptionType
 from json import loads, dumps
-from discord_slash.utils.manage_commands import remove_all_commands
 
 class DebugCommand:
 
@@ -14,7 +14,7 @@ class DebugCommand:
                 create_option(
                     name="operação",
                     description="Opções",
-                    option_type=3,
+                    option_type=SlashCommandOptionType.STRING,
                     required=True,
                     choices=[
                         create_choice(

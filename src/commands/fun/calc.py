@@ -1,4 +1,5 @@
 from discord_slash.utils.manage_commands import create_option
+from discord_slash.model import SlashCommandOptionType
 from math import *
 
 class CalculateCommand:
@@ -12,7 +13,7 @@ class CalculateCommand:
                 create_option(
                     name="expressão",
                     description="Uma expressão matemática",
-                    option_type=3,
+                    option_type=SlashCommandOptionType.STRING,
                     required=True
                 ),
             ],

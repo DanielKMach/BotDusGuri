@@ -1,5 +1,6 @@
 from discord_slash.utils.manage_commands import create_option
 from random import randint
+from discord_slash.model import SlashCommandOptionType
 
 class RollCommand:
 
@@ -12,13 +13,13 @@ class RollCommand:
                 create_option(
                     name="mínimo",
                     description="Valor mínimo para sortear",
-                    option_type=4,
+                    option_type=SlashCommandOptionType.INTEGER,
                     required=False
                 ),
                 create_option(
                     name="máximo",
                     description="Valor máximo para sortear",
-                    option_type=4,
+                    option_type=SlashCommandOptionType.INTEGER,
                     required=False
                 ),
             ],

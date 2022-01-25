@@ -1,4 +1,5 @@
 from discord_slash.utils.manage_commands import create_option
+from discord_slash.model import SlashCommandOptionType
 
 class RemoveGameCommand:
 
@@ -11,17 +12,20 @@ class RemoveGameCommand:
                 create_option(
                     name="nome_do_jogo",
                     description="O nome do jogo que você deseja remover",
-                    option_type=3,
-                    required=True,
-                    choices=e.gamelist.get_choices()
+                    option_type=SlashCommandOptionType.STRING,
+                    required=True
                 )
             ],
             guild_ids=e.allowed_guilds["gamelist"]
         )
         async def remover_jogo(ctx, nome_do_jogo):
-            e.gamelist.remove_game(
-                e.gamelist.index_of(nome_do_jogo)
-            )
+            game_index = e.gamelist.index_of_closest(nome_do_jogo)
+            if game_index == None:
+                await ctx.send(f"Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**")
+                return
+
+            name = e.gamelist.get_name(game_index)
+            e.gamelist.remove_game(game_index)
             e.gamelist.save_to_mongo()
-            await ctx.send(f":white_check_mark: | **{nome_do_jogo}** removido!")
-            await e.slash.sync_all_commands()
+            
+            await ctx.send(f":white_check_mark: | **{name}** removido!")

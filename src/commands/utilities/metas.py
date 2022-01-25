@@ -1,4 +1,5 @@
 from discord_slash.utils.manage_commands import create_option, create_choice
+from discord_slash.model import SlashCommandOptionType
 from discord import Embed
 from requests import request
 from bs4 import BeautifulSoup
@@ -39,7 +40,7 @@ class MetaCommand:
                 create_option(
                     name="modo_de_jogo",
                     description="O modo de jogo dos Brawlers meta",
-                    option_type=3,
+                    option_type=SlashCommandOptionType.STRING,
                     required=True,
                     choices=[
                         create_choice(
@@ -83,7 +84,7 @@ class MetaCommand:
                 create_option(
                     name="quantidade",
                     description="A quantidade de Brawlers meta para visualizar",
-                    option_type=4,
+                    option_type=SlashCommandOptionType.INTEGER,
                     required=False
                 )
             ],
@@ -98,8 +99,7 @@ class MetaCommand:
             )
 
             div = html.select_one(f"#gameModeData{modo_de_jogo}")
-            table = div.select_one(f"table tbody")
-            brawlers = table.find_all("tr")
+            brawlers = div.select_one(f"table tbody").find_all("tr")
 
             text = str()
 

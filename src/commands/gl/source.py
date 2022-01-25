@@ -1,4 +1,5 @@
 from discord_slash.utils.manage_commands import create_option
+from discord_slash.model import SlashCommandOptionType
 
 class SetSourceCommand:
 
@@ -11,21 +12,25 @@ class SetSourceCommand:
                 create_option(
                     name="nome_do_jogo",
                     description="O nome do jogo para definir a fonte",
-                    option_type=3,
-                    required=True,
-                    choices=e.gamelist.get_choices()
+                    option_type=SlashCommandOptionType.STRING,
+                    required=True
                 ),
                 create_option(
                     name="fonte",
                     description="Um link da internet, provavelmente levando ao Google Play",
-                    option_type=3,
+                    option_type=SlashCommandOptionType.STRING,
                     required=True
                 )
             ],
             guild_ids=e.allowed_guilds["gamelist"]
         )
         async def definir_fonte(ctx, nome_do_jogo, fonte):
-            e.gamelist.set_source(e.gamelist.index_of(nome_do_jogo), fonte.lower())
+            game_index = e.gamelist.index_of_closest(nome_do_jogo)
+            if game_index == None:
+                await ctx.send(f"Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**")
+                return
             
-            await ctx.send(f":link: | Definido `{fonte.lower()}` como a fonte de **{e.gamelist.get_name(e.gamelist.index_of(nome_do_jogo))}**")
-            save_gamelist()
+            e.gamelist.set_source(game_index, fonte.lower())
+            e.gamelist.save_to_mongo()
+            
+            await ctx.send(f":link: | Definido `{fonte.lower()}` como a fonte de **{e.gamelist.get_name(game_index)}**")

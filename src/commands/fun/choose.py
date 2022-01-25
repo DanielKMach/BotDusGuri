@@ -1,6 +1,6 @@
 from discord_slash.utils.manage_commands import create_option
 from discord_slash.utils.manage_components import create_button, create_actionrow, wait_for_component
-from discord_slash.model import ButtonStyle
+from discord_slash.model import SlashCommandOptionType, ButtonStyle
 from random import randint
 
 class ChooseCommand:
@@ -14,7 +14,7 @@ class ChooseCommand:
                 create_option(
                     name="escolhas",
                     description="As palavras para escolher, separado por espaços",
-                    option_type=3,
+                    option_type=SlashCommandOptionType.STRING,
                     required=True
                 ),
             ],

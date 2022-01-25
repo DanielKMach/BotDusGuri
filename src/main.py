@@ -53,7 +53,7 @@ def instantiate_bot():
     async def on_ready():
         game = discord.Game(f"{profile.get('game', 'Online')} v{profile.get('bot_version', '404')}")
         await bot.change_presence(status=discord.Status[profile.get("status", "online").lower()], activity=game)
-        print("I'm ready")
+        print("Estou pronto!")
 
 
 def build_permissions():
@@ -132,6 +132,12 @@ def build_commands(base_event):
     DebugCommand(base_event)
 
     MetaCommand(base_event)
+
+    if profile.get("send_error_to", None) != None:
+        @bot.event
+        async def on_slash_command_error(ctx, excep):
+            user = await bot.fetch_user(profile["send_error_to"])
+            await user.send(f"Houve uma exceção durante a execução do comando `{ctx.name}`.\n```\n{excep}\n```")
 
 def build_triggers(base_event):
     from triggers.voice_join import VoiceJoinTrigger

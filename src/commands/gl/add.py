@@ -1,5 +1,6 @@
 from discord_slash.utils.manage_commands import create_option
 from discord_slash.utils.manage_commands import remove_all_commands
+from discord_slash.model import SlashCommandOptionType
 from asyncio import sleep
 
 class AddGameCommand:
@@ -13,7 +14,7 @@ class AddGameCommand:
                 create_option(
                     name="nome_do_jogo",
                     description="O nome do jogo que você deseja adicionar",
-                    option_type=3,
+                    option_type=SlashCommandOptionType.STRING,
                     required=True
                 )
             ],
