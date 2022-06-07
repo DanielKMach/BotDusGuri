@@ -2,4 +2,4 @@ discord.py==1.7.3
 discord-py-slash-command==3.0.3
 pymongo[srv]==3.2
 requests
-BeautifulSoup4pip
+BeautifulSoup4
