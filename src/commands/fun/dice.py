@@ -1,15 +1,22 @@
+from discord import app_commands, File, Interaction
+from bdg import BotDusGuri
 from random import randint
-from discord import File
 
-def define_dice_command(e):
+class DiceCommand(app_commands.Command):
 
-	@e.slash.slash(
-		name="dado",
-		description="Um dado de 6 lados",
-		guild_ids=e.allowed_guilds["default"]
-	)
-	async def dado(ctx):
+	def __init__(self, bot: BotDusGuri):
+		self.bot = bot
+		super().__init__(
+			name="dado",
+			description="Um dado de 6 lados",
+			callback=self.on_command
+		)
+
+	async def on_command(self, i: Interaction):
+
+		await i.response.defer(thinking=True)
+
 		num = randint(1, 6)
 		dice_path = f"res/dices/dice_{num}.gif"
 
-		await ctx.send(file=File(dice_path))
+		await i.followup.send(file=File(dice_path))

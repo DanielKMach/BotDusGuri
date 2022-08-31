@@ -1,47 +1,54 @@
-from discord import Embed
+from discord import Interaction, Embed, app_commands
+from bdg import BotDusGuri
 
-def define_viewlist_command(e):
+class ListGamesCommand(app_commands.Command):
 
-    @e.slash.slash(
-        name="lista_de_jogos",
-        description="Lista de Jogos - Visualize a lista de jogos disponiveis para jogar",
-        guild_ids=e.allowed_guilds["gamelist"]
-    )
-    async def lista_de_jogos(ctx):
+	def __init__(self, bot: BotDusGuri):
+		self.bot = bot
+		super().__init__(
+			name= "lista_de_jogos",
+			description= "Lista de Jogos - Visualize a lista de jogos disponiveis para jogar",
+			callback= self.on_command
+		)
 
-        game_names = e.gamelist.get_name_list()
-        game_ratings = e.gamelist.get_rating_median_list()
+	
+	async def on_command(self, i: Interaction):
 
-        if len(game_names) == 0:
-            await ctx.send("Não existe jogos na lista")
-            return
+		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
 
-        # Contruindo a lista
-        message = ""
-        for i in range(len(game_names)):
-            message += f"{game_names[i]} - "
-            if game_ratings[i] != None:
-                message += f"`{game_ratings[i]}/10`"
-            else:
-                message += "`Sem avaliações`"
+		game_names = gamelist.get_name_list()
+		game_ratings = gamelist.get_rating_median_list()
 
-            if e.gamelist.has_user_rated_game(i, ctx.author.id):
-                message += " :star:"
-            message += "\n"
+		if len(game_names) == 0:
+			await i.response.send_message("Não existe jogos na lista", ephemeral=True)
+			return
 
-        ratings_count = 0
-        for rating in game_ratings:
-            if rating != None:
-                ratings_count += 1
+		# Contruindo a lista
+		message = ""
+		for g in range(len(game_names)):
+			message += f"{game_names[g]} - "
+			if game_ratings[g] != None:
+				message += f"`{game_ratings[g]}/10`"
+			else:
+				message += "`Sem avaliações`"
 
-        # Montando o Embed
-        list_embed = Embed(
-            title="Lista de Jogos",
-            description=message,
-            color=0x0090eb
-        )
-        list_embed.set_footer(
-            text=f"{ratings_count}/{len(game_names)} avaliados"
-        )
+			if gamelist.has_user_rated_game(g, i.user.id):
+				message += " :star:"
+			message += "\n"
 
-        await ctx.send(":scroll: | Aqui está a lista de jogos disponiveis para jogar", embed=list_embed)
+		ratings_count = 0
+		for rating in game_ratings:
+			if rating != None:
+				ratings_count += 1
+
+		# Montando o Embed
+		list_embed = Embed(
+			title="Lista de Jogos",
+			description=message,
+			color=0x0090eb
+		)
+		list_embed.set_footer(
+			text=f"{ratings_count}/{len(game_names)} avaliados"
+		)
+
+		await i.response.send_message(":scroll: | Aqui está a lista de jogos disponiveis para jogar", embed=list_embed)

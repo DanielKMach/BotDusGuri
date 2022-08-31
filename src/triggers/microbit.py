@@ -1,9 +1,10 @@
 from serial import Serial
+from serial.tools.list_ports import comports
 
 def define_microbit_trigger(e):
 
 	try:
-		serial = Serial(port="COM4", baudrate=115200, timeout=0.5)
+		serial = Serial(port=comports()[0], baudrate=115200, timeout=0.5)
 		if not serial.is_open:
 			serial.Open()
 	except Exception as error:

@@ -1,6 +1,5 @@
 __pycache__
 .vscode
-res/test_profile.json
 *.pyc
 *.todo
-mongod.bat
+.env

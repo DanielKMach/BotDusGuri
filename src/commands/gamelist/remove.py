@@ -1,29 +1,27 @@
-from discord_slash.utils.manage_commands import create_option
-from discord_slash.model import SlashCommandOptionType
+from discord import Interaction, app_commands
+from bdg import BotDusGuri
 
-def define_removegame_command(e):
+class RemoveGameCommand(app_commands.Command):
 
-	@e.slash.slash(
-		name="remover_jogo",
-		description="Lista de Jogos - Remova um jogo à lista",
-		options=[
-			create_option(
-				name="nome_do_jogo",
-				description="O nome do jogo que você deseja remover",
-				option_type=SlashCommandOptionType.STRING,
-				required=True
-			)
-		],
-		guild_ids=e.allowed_guilds["gamelist"]
-	)
-	async def remover_jogo(ctx, nome_do_jogo):
-		game_index = e.gamelist.index_of_closest(nome_do_jogo)
+	def __init__(self, bot: BotDusGuri):
+		self.bot = bot
+		super().__init__(
+			name= "remover_jogo",
+			description= "Lista de Jogos - Remova um jogo da lista",
+			callback= self.on_command
+		)
+	
+	async def on_command(self, i: Interaction, nome_do_jogo: str):
+
+		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
+
+		game_index = gamelist.index_of_closest(nome_do_jogo)
 		if game_index == None:
-			await ctx.send(f"Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**")
+			await i.response.send_message(f":warning: | Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**", ephemeral=True)
 			return
 
-		name = e.gamelist.get_name(game_index)
-		e.gamelist.remove_game(game_index)
-		e.gamelist.save_to_mongo()
+		name = gamelist.get_name(game_index)
+		gamelist.remove_game(game_index)
+		gamelist.save_to_mongo()
 		
-		await ctx.send(f":white_check_mark: | **{name}** removido!")
+		await i.response.send_message(f":white_check_mark: | **{name}** removido!")

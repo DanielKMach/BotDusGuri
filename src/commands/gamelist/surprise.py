@@ -1,23 +1,29 @@
+from discord import Interaction, app_commands
+from bdg import BotDusGuri
+from gamelist import GameFilter
 from random import randint
 
-def define_sortgames_command(e):
+class SurpriseGameCommand(app_commands.Command):
 
-	@e.slash.slash(
-		name="sortear_jogo",
-		description="Lista de Jogos - Sorteie um jogo aleatório que ainda não foi avaliado",
-		guild_ids=e.allowed_guilds["gamelist"]
-	)
-	async def sortear_jogo(ctx):
-		games = e.gamelist.get_name_list()
-		games_to_sort = []
-		for game in games:
-			if not e.gamelist.has_been_rated(e.gamelist.index_of(game)):
-				games_to_sort.append(game)
+	def __init__(self, bot: BotDusGuri):
+		self.bot = bot
+		super().__init__(
+			name="sortear_jogo",
+			description="Lista de Jogos - Sorteie um jogo aleatório baseado no filtro especificado",
+			callback=self.on_command
+		)
 
-		if len(games_to_sort) == 0:
-			await ctx.send(":warning: | Todos os jogos da lista já foram avaliados")
+	async def on_command(self, i: Interaction, de: GameFilter):
+
+		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
+
+		available_games: tuple[int] = (g for g in gamelist.filter(de))
+
+		if len(available_games) <= 0:
+			await i.response.send_message(":warning: | Não há nenhum jogo com esse filtro", ephemeral=True)
 			return
 
-		random_game = games_to_sort[randint(0, len(games_to_sort) - 1)]
-		await ctx.send(f":tada: | O jogo sorteado é... ||**{random_game.upper()}!**||")
+		game_index = available_games[ randint(0, len(available_games) - 1) ]
+		game = gamelist.get_name(game_index)
+		await i.response.send_message(f":tada: | O jogo sorteado é... ||**{game.upper()}!**||")
 

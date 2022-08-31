@@ -3,7 +3,4 @@ from .game import *
 from .list import *
 from .remove import *
 from .review import *
-from .set_icon import *
-from .set_name import *
-from .set_source import *
 from .surprise import *

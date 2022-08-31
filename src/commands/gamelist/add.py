@@ -1,30 +1,44 @@
-from discord_slash.utils.manage_commands import create_option
-from discord_slash.model import SlashCommandOptionType
+from discord import Interaction, app_commands, ui
+from bdg import BotDusGuri
+from gamelist import GameList
 
-def define_addgame_command(e):
+game_name = ""
 
-	@e.slash.slash(
-		name="adicionar_jogo",
-		description="Lista de Jogos - Adicione um jogo à lista",
-		options=[
-			create_option(
-				name="nome_do_jogo",
-				description="O nome do jogo que você deseja adicionar",
-				option_type=SlashCommandOptionType.STRING,
-				required=True
-			)
-		],
-		guild_ids=e.allowed_guilds["gamelist"]
-	)
-	async def adicionar_jogo(ctx, nome_do_jogo):
+class GameModal(ui.Modal, title="Adicionar um jogo"):
 
-		#msg = await ctx.send(f":hourglass_flowing_sand: | Carregando...")
+	name =   ui.TextInput(label="Nome do jogo", min_length=3, max_length=30, placeholder=game_name)
+	icon =   ui.TextInput(label="Ícone do jogo (url)", min_length=3, required=False)
+	source = ui.TextInput(label="Link de download (url)", min_length=3, required=False)
 
-		e.gamelist.create_game(
-			nome_do_jogo,
-			added_by=ctx.author.id
+	def __init__(self, gamelist: GameList):
+		self.gamelist = gamelist
+		super().__init__()
+
+	async def on_submit(self, i: Interaction):
+		self.gamelist.create_game(
+			name=     self.name.value,
+			icon_url= self.icon.value,
+			source=   self.source.value,
+			added_by= i.user.id
 		)
-		e.gamelist.sort()
-		e.gamelist.save_to_mongo()
+		self.gamelist.save_to_mongo()
 
-		await ctx.send(content=f":white_check_mark: | **{nome_do_jogo}** adicionado com sucesso!")
+		await i.response.send_message(content=f":white_check_mark: | **{self.name.value}** adicionado com sucesso!", ephemeral=True)
+		self.stop()
+
+class AddGameCommand(app_commands.Command):
+
+	def __init__(self, bot: BotDusGuri):
+		self.bot = bot
+		super().__init__(
+			name= "adicionar_jogo",
+			description= "Lista de Jogos - Adicione um jogo à lista",
+			callback= self.on_command
+		)
+	
+	async def on_command(self, i: Interaction):
+
+		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
+		modal = GameModal(gamelist)
+
+		await i.response.send_modal(modal)

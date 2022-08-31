@@ -1,47 +1,26 @@
-from discord_slash.utils.manage_commands import create_option
-from utils import OptionTypes
+from discord import Interaction, app_commands
+from bdg import BotDusGuri
 
-def define_reviewgame_command(e):
+class ReviewGameCommand(app_commands.Command):
 
-	@e.slash.slash(
-		name="avaliar_jogo",
-		description="Lista de Jogos - Dê uma nota e sua opinião sobre um jogo!",
-		options=[
-			create_option(
-				name="nome_do_jogo",
-				description="O nome do jogo que você deseja avaliar",
-				option_type=OptionTypes.STRING,
-				required=True
-			),
-			create_option(
-				name="nota",
-				description="A Nota do jogo de `0` a `10`",
-				option_type=OptionTypes.NUMBER,
-				required=True
-			),
-			create_option(
-				name="opinião",
-				description="A sua opinião sobre o jogo",
-				option_type=OptionTypes.STRING,
-				required=False
-			)
-		],
-		guild_ids=e.allowed_guilds["gamelist"]
-	)
-	async def avaliar_jogo(ctx, nome_do_jogo, nota, opinião=None):
-		game_index = e.gamelist.index_of_closest(nome_do_jogo)
+	def __init__(self, bot: BotDusGuri):
+		self.bot = bot
+		super().__init__(
+			name="avaliar_jogo",
+			description="Lista de Jogos - Dê uma nota e sua opinião sobre um jogo!",
+			callback=self.on_command
+		)
+	
+	async def on_command(self, i: Interaction, nome_do_jogo: str, nota: app_commands.Range[float, 0, 10], opinião: str = None):
+
+		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
+
+		game_index = gamelist.index_of_closest(nome_do_jogo)
 		if game_index == None:
-			await ctx.send(f"Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**")
+			await i.response.send_message(f"Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**", ephemeral=True)
 			return
 		
-		try:
-			nota = float(nota)
-			nota = max(min(nota, 10), 0)
-		except:
-			await ctx.send(":warning: | Esta nota é inválida")
-			return
-		
-		e.gamelist.rate_game(game_index, ctx.author.id, nota, opinion=opinião)
-		e.gamelist.save_to_mongo()
+		gamelist.rate_game(game_index, i.user.id, nota, opinion=opinião)
+		gamelist.save_to_mongo()
 
-		await ctx.send(f":star: | **{ctx.author.display_name}** avaliou o jogo **{e.gamelist.get_name(game_index)}** com `{str(nota)}/10`!")
+		await i.response.send_message(f":star: | **{i.user.display_name}** avaliou o jogo **{gamelist.get_name(game_index)}** com `{nota}/10`!")

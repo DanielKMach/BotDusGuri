@@ -1,154 +1,69 @@
-from discord_slash.utils.manage_commands import create_option, create_choice, remove_all_commands
-from discord_slash.utils.manage_components import create_button, create_actionrow, wait_for_component, ButtonStyle
-from discord_slash.model import SlashCommandOptionType
+from discord import app_commands, Interaction
+from bdg import BotDusGuri
+from enum import Enum
 from json import loads, dumps
 
-def define_debug_command(e):
+class DebugOperation(Enum):
+	EXPORTMONGO  = 0
+	IMPORTMONGO  = 1
+	VOICETRIGGER = 2
+	SHUTDOWN     = 3
 
-	@e.slash.slash(
-		name="debug",
-		description="Comando Debug",
-		options=[
-			create_option(
-				name="operação",
-				description="Opções",
-				option_type=SlashCommandOptionType.STRING,
-				required=True,
-				choices=[
-					create_choice(
-						name="Exportar Gamelist",
-						value="exportar_gamelist"
-					),
-					create_choice(
-						name="Importar Gamelist",
-						value="importar_gamelist"
-					),
-					create_choice(
-						name="Exportar arquivo Mongo",
-						value="exportar_mongo"
-					),
-					create_choice(
-						name="Importar arquivo Mongo",
-						value="importar_mongo"
-					),
-					create_choice(
-						name="Salvar Gamelist para o banco de dados",
-						value="save_gamelist"
-					),
-					create_choice(
-						name="Carregar Gamelist do banco de dados",
-						value="load_gamelist"
-					),
-					create_choice(
-						name="Desligar bot",
-						value="desligar"
-					)
-				]
-			),
-			create_option(
-				name="argumento",
-				description="Argumento",
-				option_type=3,
-				required=False
-			)
-		]
-	)
-	async def debug(ctx, operação, argumento=""):
-		if not ctx.author.id in e.bot_profile["debug_allowed"]:
-			await ctx.send(":no_entry_sign: | Você não tem permissão para executar este comando")
-			return
+class DebugCommand(app_commands.Command):
 
-		if operação == "exportar_gamelist":
-			json_obj = e.gamelist.get_json()
-			await ctx.send(f":pencil: | Aqui está os dados da Gamelist\n```json\n{dumps(json_obj)}\n```")
+	def __init__(self, bot: BotDusGuri):
+		self.bot = bot
+		super().__init__(
+			name= "debug",
+			description= "Comando Debug. (!) SOMENTTE PESSOAL AUTORIZADO",
+			callback= self.on_command,
+		)
+		self.add_check(
+			lambda i: i.user.id in bot.config["debug_allowed"]
+		)
 
-		elif operação == "importar_gamelist":
-			if argumento == "":
-				await ctx.send(":warning: | Eu não posso importar um JSON vazio!")
-				return
+	async def on_command(self, i: Interaction, operação: DebugOperation, argumento: str = ""):
 
+		if operação == DebugOperation.EXPORTMONGO:
 			try:
-				e.gamelist.load_json(loads(argumento))
-				await ctx.send(":pencil2: | JSON importado para a lista de jogos!")
+				filter = loads(argumento)
 			except Exception as exception:
-				await ctx.send(f":warning: | Este JSON é invalido\nErro: `{exception}`")
+				await i.response.send_message(":warning: | Não foi possível importar o filtro de pesquisa", ephemeral=True)
 				return
 
-		elif operação == "exportar_mongo":
-			try:
-				search_filter = loads(argumento)
-			except Exception as exception:
-				await ctx.send(":warning: | Não foi possível importar o filtro de pesquisa")
-				return
-
-			document = e.gamelist._mongo_collection.find_one(search_filter)
+			document = self.bot.mongodb["default"].find_one(filter)
 			if document == None:
-				await ctx.send(":warning: | Não foi possível encontrar o arquivo com este filtro")
+				await i.response.send_message(":warning: | Não foi possível encontrar o arquivo com este filtro", ephemeral=True)
 				return
 
-			del(document["_id"])
-			await ctx.send(f":pencil: | Aqui está os dados do arquivo encontrado\n```json\n{dumps(document)}\n```")
+			await i.response.send_message(f":pencil: | Aqui está os dados do arquivo encontrado\n```json\n{dumps(document)}\n```", ephemeral=True)
 
-		elif operação == "importar_mongo":
+
+		elif operação == DebugOperation.IMPORTMONGO:
 			try:
-				json_obj = loads(argumento)
+				document = loads(argumento)
 			except Exception as exception:
-				await ctx.send(f":warning: | Este JSON é invalido\nErro: `{exception}`")
+				await i.response.send_message(f":warning: | Este JSON é invalido! `{exception}`", ephemeral=True)
 				return
-			
-			if type(json_obj.get("_name", None)) != str:
-				await ctx.send(':warning: | Você precisa de um filtro para importar JSON para o Mongo!\nEx: `{"_name": "games"}`')
 
-			search_filter = {"_name": json_obj["_name"]}
-			del(json_obj["_name"])
+			if document.get("_id") == None:
+				await i.response.send_message(':warning: | Você precisa de um ID para importar um documento JSON para o Mongo!\nEx: `{"_id": "games"}`', ephemeral=True)
+				return
 
-			e.gamelist._mongo_collection.update_one(
-				search_filter,
-				{"$set": json_obj},
+			filter = {'_id': document['_id']}
+			del(document['_id'])
+
+			self.bot.mongodb['default'].update_one(
+				filter,
+				{'$set': document},
 				upsert=True
 			)
 
-			await ctx.send(f":pencil2: | O arquivo foi salvo como `{search_filter['_name']}`")
+			await i.response.send_message(f":pencil2: | O arquivo foi salvo com o ID: `{str(filter['_id'])}`", ephemeral=True)
 
-		elif operação == "save_gamelist":
-			e.gamelist.save_to_mongo()
-			await ctx.send(":white_check_mark: | A Gamelist foi salva para o Mongo")
+		elif operação == DebugOperation.VOICETRIGGER:
+			await i.response.send_message("TODO")
 
-		elif operação == "load_gamelist":
-			e.gamelist.load_from_mongo()
-			await ctx.send(":white_check_mark: | A Gamelist foi carregada do Mongo")
-
-		elif operação == "desligar":
-
-			buttons = [
-				create_button(
-					style=ButtonStyle.red,
-					label="Sim, tenho certeza",
-					custom_id="sim"
-				),
-				create_button(
-					style=ButtonStyle.green,
-					label="Não, cancelar",
-					custom_id="nao"
-				)
-			]
-			action_row = create_actionrow(*buttons)
-
-			confirm_msg = await ctx.send(":warning: | Você tem certeza que deseja me desligar?", components=[action_row])
-
-			button_ctx = await wait_for_component(e.bot, components=action_row)
-			if button_ctx.custom_id == "sim":
-				print("Preparando para o desligamento")
-				await confirm_msg.edit(content=":warning: | Desligando...", components=[])
-				print("Removendo todos os comandos...")
-				await remove_all_commands(e.bot.user.id, e.bot_config["token"], guild_ids=e.allowed_guilds["default"])
-				print("Desligando...")
-				await e.bot.close()
-				return
-
-			if button_ctx.custom_id == "nao":
-				await confirm_msg.delete()
-				return
-		
-		else:
-			await ctx.send(":warning: | Esta opção não existe")
+		elif operação == DebugOperation.SHUTDOWN:
+			await i.response.send_message("Desligando...", ephemeral=True)
+			await self.bot.close()

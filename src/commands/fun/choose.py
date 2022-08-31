@@ -1,80 +1,77 @@
-from discord_slash.utils.manage_commands import create_option
-from discord_slash.utils.manage_components import create_button, create_actionrow, wait_for_component
-from discord_slash.model import SlashCommandOptionType, ButtonStyle
+from discord import app_commands, ui, ButtonStyle, Interaction
+from bdg import BotDusGuri
 from random import randint
 
-def define_choose_command(e):
+class ChooseView(ui.View):
 
-	@e.slash.slash(
-		name="escolher",
-		description="Escolha entre 2 ou mais opções",
-		options=[
-			create_option(
-				name="escolhas",
-				description="As palavras para escolher, separado por espaços",
-				option_type=SlashCommandOptionType.STRING,
-				required=True
-			),
-		],
-		guild_ids=e.allowed_guilds["default"]
-	)
-	async def escolher(ctx, escolhas):
+	@property
+	def button_id(self):
+		return self._id
+
+	@ui.button(label="Repetir", style=ButtonStyle.blurple)
+	async def btn1(self, i: Interaction, btn: ui.Button):
+		self._id = "repeat"
+		self.stop()
+
+	@ui.button(label="Repetir s/ escolhido", style=ButtonStyle.green)
+	async def btn2(self, i: Interaction, btn: ui.Button):
+		self._id = "repeat-without"
+		self.stop()
+
+	@ui.button(label="Não repetir", style=ButtonStyle.red)
+	async def btn3(self, i: Interaction, btn: ui.Button):
+		self._id = "dont-repeat"
+		self.stop()
+
+
+class ChooseCommand(app_commands.Command):
+
+	def __init__(self, bot: BotDusGuri):
+		self.bot = bot
+		super().__init__(
+			name="escolher",
+			description="Escolha entre 2 ou mais opções",
+			callback=self.on_command
+		)
+
+	async def on_command(self, i: Interaction, escolhas: str):
 
 		choices = escolhas.split(" ")
-		to_exit = False
-		to_answer = True
 
-		while not to_exit:
+		if len(choices) <= 1:
+			await i.response.send_message(":warning: | Você precisa especificar 2 ou mais opções", ephemeral=True)
+			return
+
+		while True:
 			chosen = choices[randint(0, len(choices) - 1)]
 
-			if len(choices) > 1:
-				buttons = [
-					create_button(
-						style=ButtonStyle.blue,
-						label="Repetir",
-						custom_id="00"
-					),
-					create_button(
-						style=ButtonStyle.green,
-						label=f"Repetir sem '{chosen}'",
-						custom_id="01"
-					),
-					create_button(
-						style=ButtonStyle.red,
-						label="Não repetir",
-						custom_id="02"
-					)
-				]
-
-				action_row = create_actionrow(*buttons)
-
-			answer = ""
-			if not to_answer and len(choices) > 1:
-				answer = f"\n*{len(choices) - 1} restantes*"
-
-			if to_answer:
-				msg = await ctx.send(f":slot_machine: | O escolhido foi... **{chosen}**!"+answer, components=[action_row] if len(choices) > 1 else [])
-			else:
-				msg = await ctx.channel.send(f":slot_machine: | O escolhido foi... **{chosen}**!"+answer, components=[action_row] if len(choices) > 1 else [])
-
+			view = ui.View()
+			msg = f":slot_machine: | O escolhido foi... **{chosen}**!"
 
 			if len(choices) > 1:
-				button_ctx = await wait_for_component(e.bot, components=action_row)
-				if button_ctx.custom_id == "00":
-					await msg.edit(components=[])
-					to_answer = False
+				view = ChooseView()
+				msg += f"\n*...de {len(choices)} itens.*"
 
-				if button_ctx.custom_id == "01":
-					await msg.edit(components=[])
-					to_answer = False
-					choices.remove(chosen)
-					if len(choices) <= 0:
-						await ctx.channel.send(":warning: | Não há mais itens na lista!")
-						to_exit = True
-
-				else:
-					await msg.edit(components=[])
-					to_exit = True
-
+			followup_msg = None
+			if not i.response.is_done():
+				await i.response.send_message(msg, view=view)
 			else:
-				to_exit = True
+				followup_msg = await i.followup.send(msg, view=view, wait=True)
+
+			if view == None:
+				return
+
+			# Espera até usuário responder
+			timedout = await view.wait()
+			
+			# Edita mensagem e remove os componentes
+			if followup_msg != None:
+				await followup_msg.edit(view=None)
+			else:
+				await i.edit_original_response(view=None)
+
+			if view.button_id == "dont-repeat" or timedout:
+				return
+
+			if view.button_id == "repeat-without":
+				choices.remove(chosen)
