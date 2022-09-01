@@ -1,3 +1,4 @@
+import io
 import bdg
 import bs4
 import discord
@@ -26,7 +27,7 @@ class PogoRaidsCommand(discord.app_commands.Command):
 
 		await i.response.defer(thinking=True)
 
-		graphic = get_graphic("https://www.leekduck.com/boss/")
+		graphic = get_graphic("https://www.leekduck.com/boss/") # Pega a url da imagem
+		graphic = requests.get(graphic).content # Baixa a imagem apartir da url e armazena como bytes
 
-		await i.followup.send(":rhino: | Aqui estão os atuais pokémon em raids")
-		await i.channel.send(graphic)
+		await i.followup.send(":rhino: | Aqui estão os atuais pokémon em raids:", file=discord.File(io.BytesIO(graphic), "raids.jpg"))

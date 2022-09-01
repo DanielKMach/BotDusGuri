@@ -1,3 +1,5 @@
+import io
+import requests
 import bdg
 import discord
 from commands.utilities import pogoraids
@@ -16,7 +18,7 @@ class PogoResearchCommand(discord.app_commands.Command):
 
 		await i.response.defer(thinking=True)
 
-		graphic = pogoraids.get_graphic("https://www.leekduck.com/research/")
+		graphic = pogoraids.get_graphic("https://www.leekduck.com/research/") # Pega a url da imagem
+		graphic = requests.get(graphic).content # Baixa a imagem apartir da url e armazena como bytes
 
-		await i.followup.send(":scroll: | Aqui estão as atuais recompensas de pesquisa")
-		await i.channel.send(graphic)
+		await i.followup.send(":scroll: | Aqui estão as atuais recompensas de pesquisa:", file=discord.File(io.BytesIO(graphic), "researches.jpg"))
