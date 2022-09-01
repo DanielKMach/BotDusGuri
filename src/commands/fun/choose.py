@@ -58,7 +58,7 @@ class ChooseCommand(app_commands.Command):
 			else:
 				followup_msg = await i.followup.send(msg, view=view, wait=True)
 
-			if view == None:
+			if len(choices) <= 1:
 				return
 
 			# Espera até usuário responder

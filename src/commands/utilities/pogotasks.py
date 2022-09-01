@@ -1,7 +1,6 @@
 import bdg
-import bs4
 import discord
-import requests
+from commands.utilities import pogoraids
 
 class PogoResearchCommand(discord.app_commands.Command):
 
@@ -17,8 +16,7 @@ class PogoResearchCommand(discord.app_commands.Command):
 
 		await i.response.defer(thinking=True)
 
-		html = bs4.BeautifulSoup(requests.get("https://www.leekduck.com/boss", cookies={"lang": "pt"}).content, "html.parser")
+		graphic = pogoraids.get_graphic("https://www.leekduck.com/research/")
 
-		graphic = html.select_one("#graphic img")['src']
-
-		await i.followup.send(content=graphic)
+		await i.followup.send(":scroll: | Aqui estão as atuais recompensas de pesquisa")
+		await i.channel.send(graphic)

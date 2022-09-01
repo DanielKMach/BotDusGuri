@@ -1,9 +1,10 @@
-from discord import app_commands, Interaction
-from bdg import BotDusGuri
-from enum import Enum
-from json import loads, dumps
+from discord import app_commands
+import discord
+import bdg
+import enum
+import json
 
-class DebugOperation(Enum):
+class DebugOperation(enum.Enum):
 	EXPORTMONGO  = 0
 	IMPORTMONGO  = 1
 	VOICETRIGGER = 2
@@ -11,7 +12,7 @@ class DebugOperation(Enum):
 
 class DebugCommand(app_commands.Command):
 
-	def __init__(self, bot: BotDusGuri):
+	def __init__(self, bot: bdg.BotDusGuri):
 		self.bot = bot
 		super().__init__(
 			name= "debug",
@@ -22,11 +23,15 @@ class DebugCommand(app_commands.Command):
 			lambda i: i.user.id in bot.config["debug_allowed"]
 		)
 
-	async def on_command(self, i: Interaction, operação: DebugOperation, argumento: str = ""):
+	async def on_command(self, i: discord.Interaction, operação: DebugOperation, argumento: str = ""):
 
 		if operação == DebugOperation.EXPORTMONGO:
+			await i.response.send_message("TODO")
+			return
+
+			# Deprecated
 			try:
-				filter = loads(argumento)
+				filter = json.loads(argumento)
 			except Exception as exception:
 				await i.response.send_message(":warning: | Não foi possível importar o filtro de pesquisa", ephemeral=True)
 				return
@@ -36,12 +41,16 @@ class DebugCommand(app_commands.Command):
 				await i.response.send_message(":warning: | Não foi possível encontrar o arquivo com este filtro", ephemeral=True)
 				return
 
-			await i.response.send_message(f":pencil: | Aqui está os dados do arquivo encontrado\n```json\n{dumps(document)}\n```", ephemeral=True)
+			await i.response.send_message(f":pencil: | Aqui está os dados do arquivo encontrado\n```json\n{json.dumps(document)}\n```", ephemeral=True)
 
 
 		elif operação == DebugOperation.IMPORTMONGO:
+			await i.response.send_message("TODO")
+			return
+
+			# Deprecated
 			try:
-				document = loads(argumento)
+				document = json.loads(argumento)
 			except Exception as exception:
 				await i.response.send_message(f":warning: | Este JSON é invalido! `{exception}`", ephemeral=True)
 				return

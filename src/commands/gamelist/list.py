@@ -20,11 +20,11 @@ class ListGamesCommand(app_commands.Command):
 		game_ratings = gamelist.get_rating_median_list()
 
 		if len(game_names) == 0:
-			await i.response.send_message("Não existe jogos na lista", ephemeral=True)
+			await i.response.send_message(":cricket: | Não há jogos na lista", ephemeral=True)
 			return
 
 		# Contruindo a lista
-		message = ""
+		message = str()
 		for g in range(len(game_names)):
 			message += f"{game_names[g]} - "
 			if game_ratings[g] != None:

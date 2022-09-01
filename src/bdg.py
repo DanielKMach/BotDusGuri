@@ -111,9 +111,8 @@ class BotDusGuri(discord.ext.commands.Bot):
 		await self.add_cog(triggers.VoiceJoinCog(self))
 
 	async def sync_commands(self):
-		cmds = await self.tree.sync()
-		cmds = [cmd.name for cmd in cmds]
-		print("Comandos sincronizados!", cmds)
+		await self.tree.sync()
+		print("Comandos sincronizados!")
 
 
 	async def on_ready(self):

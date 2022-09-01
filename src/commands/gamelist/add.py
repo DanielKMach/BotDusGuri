@@ -2,11 +2,9 @@ from discord import Interaction, app_commands, ui
 from bdg import BotDusGuri
 from gamelist import GameList
 
-game_name = ""
-
 class GameModal(ui.Modal, title="Adicionar um jogo"):
 
-	name =   ui.TextInput(label="Nome do jogo", min_length=3, max_length=30, placeholder=game_name)
+	name =   ui.TextInput(label="Nome do jogo", min_length=3, max_length=30)
 	icon =   ui.TextInput(label="Ícone do jogo (url)", min_length=3, required=False)
 	source = ui.TextInput(label="Link de download (url)", min_length=3, required=False)
 
