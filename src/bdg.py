@@ -112,6 +112,9 @@ class BotDusGuri(discord.ext.commands.Bot):
 
 	async def sync_commands(self):
 		await self.tree.sync()
+		for guild in self.guilds:
+			await self.tree.sync(guild=guild)
+
 		print("Comandos sincronizados!")
 
 
