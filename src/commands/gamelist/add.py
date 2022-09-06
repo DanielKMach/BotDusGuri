@@ -14,9 +14,9 @@ class GameModal(ui.Modal, title="Adicionar um jogo"):
 
 	async def on_submit(self, i: Interaction):
 		self.gamelist.create_game(
-			name=     self.name.value,
+			name= self.name.value,
 			icon_url= self.icon.value,
-			source=   self.source.value,
+			source= self.source.value,
 			added_by= i.user.id
 		)
 		self.gamelist.save_to_mongo()

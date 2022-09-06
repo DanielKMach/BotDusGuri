@@ -1,78 +1,80 @@
 from discord import app_commands
 import discord
 import bdg
-import enum
 import json
 
-class DebugOperation(enum.Enum):
-	EXPORTMONGO  = 0
-	IMPORTMONGO  = 1
-	VOICETRIGGER = 2
-	SHUTDOWN     = 3
+__all__ = [ "DebugCommand" ]
 
-class DebugCommand(app_commands.Command):
+class DebugCommand(app_commands.Group, name="debug", description="Comando Debug. (!) SOMENTTE PESSOAL AUTORIZADO"):
 
 	def __init__(self, bot: bdg.BotDusGuri):
 		self.bot = bot
-		super().__init__(
-			name= "debug",
-			description= "Comando Debug. (!) SOMENTTE PESSOAL AUTORIZADO",
-			callback= self.on_command,
-		)
-		self.add_check(
-			lambda i: i.user.id in bot.config["debug_allowed"]
-		)
+		super().__init__()
 
-	async def on_command(self, i: discord.Interaction, operação: DebugOperation, argumento: str = ""):
 
-		if operação == DebugOperation.EXPORTMONGO:
-			await i.response.send_message("TODO")
+	@app_commands.command(name="importar_mongo", description="Importe um documento ao banco de dados")
+	async def import_mongo(self, i: discord.Interaction, coleção: str, documento: str):
+		try:
+			doc = json.loads(documento)
+		except Exception as e:
+			await i.response.send_message(f":warning: | Este JSON é invalido: `{e}`", ephemeral=True)
 			return
 
-			# Deprecated
-			try:
-				filter = json.loads(argumento)
-			except Exception as exception:
-				await i.response.send_message(":warning: | Não foi possível importar o filtro de pesquisa", ephemeral=True)
-				return
-
-			document = self.bot.mongodb["default"].find_one(filter)
-			if document == None:
-				await i.response.send_message(":warning: | Não foi possível encontrar o arquivo com este filtro", ephemeral=True)
-				return
-
-			await i.response.send_message(f":pencil: | Aqui está os dados do arquivo encontrado\n```json\n{json.dumps(document)}\n```", ephemeral=True)
-
-
-		elif operação == DebugOperation.IMPORTMONGO:
-			await i.response.send_message("TODO")
+		if not isinstance(doc.get('_id'), str):
+			await i.response.send_message(":warning: | O documento necessita ter um atributo `_id` e ser do tipo `str`", ephemeral=True)
 			return
 
-			# Deprecated
-			try:
-				document = json.loads(argumento)
-			except Exception as exception:
-				await i.response.send_message(f":warning: | Este JSON é invalido! `{exception}`", ephemeral=True)
-				return
+		id = doc['_id']
+		del(doc['_id'])
 
-			if document.get("_id") == None:
-				await i.response.send_message(':warning: | Você precisa de um ID para importar um documento JSON para o Mongo!\nEx: `{"_id": "games"}`', ephemeral=True)
-				return
-
-			filter = {'_id': document['_id']}
-			del(document['_id'])
-
-			self.bot.mongodb['default'].update_one(
-				filter,
-				{'$set': document},
+		try:
+			coll = self.bot.mongodb[coleção]
+			coll.update_one(
+				{'_id': id},
+				{'$set': doc},
 				upsert=True
 			)
+		except Exception as e:
+			await i.response.send_message(f":warning: | Houve um erro ao salvar o documento: `{e}`", ephemeral=True)
+			return
+		
+		await i.response.send_message(f":white_check_mark: | O documento com o ID `{id}` foi salvo na coleção `{coll.name}` com sucesso!", ephemeral=True)
 
-			await i.response.send_message(f":pencil2: | O arquivo foi salvo com o ID: `{str(filter['_id'])}`", ephemeral=True)
 
-		elif operação == DebugOperation.VOICETRIGGER:
-			await i.response.send_message("TODO")
+	@app_commands.command(name="exportar_mongo", description="Exporte um documento do banco de dados")
+	async def export_mongo(self, i: discord.Interaction, coleção: str, id: str):
+		try:
+			if not isinstance(id, str):
+				raise TypeError("'id' is not an instance of 'str'")
 
-		elif operação == DebugOperation.SHUTDOWN:
-			await i.response.send_message("Desligando...", ephemeral=True)
-			await self.bot.close()
+			coll = self.bot.mongodb[coleção]
+			doc = coll.find_one(id)
+			if doc == None:
+				raise ValueError("Document not found")
+
+		except Exception as e:
+			await i.response.send_message(f":warning: | Houve um erro ao carregar o documento: `{e}`", ephemeral=True)
+			return
+		
+		await i.response.send_message(f":white_check_mark: | Aqui está o documento com o ID `{doc['_id']}`: ```json\n{json.dumps(doc)}```", ephemeral=True)
+
+
+	@app_commands.command(name="rodar_python", description="Execute uma linha de código python")
+	async def run_python(self, i: discord.Interaction, code: str):
+		try:
+			result = eval(code)
+		except Exception as e:
+			await i.response.send_message(f":warning: | Ocorreu uma excessão ao executar o código: `{e}`", ephemeral=True)
+			return
+		
+		await i.response.send_message(f":white_check_mark: | Código executado com sucesso com o resultado: `{result}`", ephemeral=True)
+
+
+	@app_commands.command(name="desligar", description="Me desliga")
+	async def shutdown(self, i: discord.Interaction):
+		await i.response.send_message("Desligando...", ephemeral=True)
+		await self.bot.close()
+
+
+	async def interaction_check(self, i: discord.Interaction) -> bool:
+		return i.user.id in self.bot.config["debug_allowed"]

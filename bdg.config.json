@@ -1,10 +1,7 @@
 {
-	"status": "online",
-	"game": "Online!",
-	"bot_version": "3",
+	"version": "3.1",
 	
 	"debug_allowed": [
-		293506597093900288,
-		440254029734477865
+		293506597093900288
 	]
 }

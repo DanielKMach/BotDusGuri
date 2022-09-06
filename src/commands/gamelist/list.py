@@ -16,30 +16,29 @@ class ListGamesCommand(app_commands.Command):
 
 		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
 
-		game_names = gamelist.get_name_list()
-		game_ratings = gamelist.get_rating_median_list()
+		names = [ game.name for game in gamelist.games ]
+		medians = [ game.rating_median for game in gamelist.games ]
+		rated = [ game.get_user_rating(i.user.id) != None for game in gamelist.games ]
 
-		if len(game_names) == 0:
+		if len(names) == 0:
 			await i.response.send_message(":cricket: | Não há jogos na lista", ephemeral=True)
 			return
 
-		# Contruindo a lista
+		# Contruindo a descrição do Embed
 		message = str()
-		for g in range(len(game_names)):
-			message += f"{game_names[g]} - "
-			if game_ratings[g] != None:
-				message += f"`{game_ratings[g]}/10`"
+		for g in range(len(names)):
+			message += f"{names[g]} - "
+
+			if medians[g]:
+				message += f"`{medians[g]}/10`"
 			else:
 				message += "`Sem avaliações`"
 
-			if gamelist.has_user_rated_game(g, i.user.id):
+			if rated[g]:
 				message += " :star:"
 			message += "\n"
 
-		ratings_count = 0
-		for rating in game_ratings:
-			if rating != None:
-				ratings_count += 1
+		rated_games_count = len(medians) - medians.count(None)
 
 		# Montando o Embed
 		list_embed = Embed(
@@ -48,7 +47,7 @@ class ListGamesCommand(app_commands.Command):
 			color=0x0090eb
 		)
 		list_embed.set_footer(
-			text=f"{ratings_count}/{len(game_names)} avaliados"
+			text=f"{rated_games_count}/{len(names)} avaliados"
 		)
 
 		await i.response.send_message(":scroll: | Aqui está a lista de jogos disponiveis para jogar", embed=list_embed)

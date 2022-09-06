@@ -1,6 +1,8 @@
 import discord
 import bdg
 
+__all__ = [ "PingCommand" ]
+
 class PingCommand(discord.app_commands.Command):
 
 	def __init__(self, bot: bdg.BotDusGuri):

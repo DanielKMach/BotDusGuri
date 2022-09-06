@@ -15,12 +15,16 @@ class ReviewGameCommand(app_commands.Command):
 
 		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
 
-		game_index = gamelist.index_of_closest(nome_do_jogo)
-		if game_index == None:
+		game = gamelist[nome_do_jogo]
+		if not game:
 			await i.response.send_message(f"Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**", ephemeral=True)
 			return
 		
-		gamelist.rate_game(game_index, i.user.id, nota, opinion=opinião)
+		game.rate(
+			author= i.user.id,
+			rating= nota,
+			opinion= opinião
+		)
 		gamelist.save_to_mongo()
 
-		await i.response.send_message(f":star: | **{i.user.display_name}** avaliou o jogo **{gamelist.get_name(game_index)}** com `{nota}/10`!")
+		await i.response.send_message(f":star: | Você avaliou **{game.name}** com **{nota}/10**!", ephemeral=True)

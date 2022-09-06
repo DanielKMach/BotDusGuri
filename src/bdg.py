@@ -9,7 +9,6 @@ class BotDusGuri(discord.ext.commands.Bot):
 
 	def __init__(self):
 		super().__init__(command_prefix="\\", intents=discord.Intents.all())
-
 		self._cached_gamelist = None
 
 	@property
@@ -24,13 +23,8 @@ class BotDusGuri(discord.ext.commands.Bot):
 	def mongodb(self):
 		return self._mongodb
 
-	@property
-	def exclusive(self):
-		return self._exclusive
-
 
 	def load_config(self, file_path: str):
-		from os import getenv
 		from os.path import exists
 		from json import loads
 
@@ -57,20 +51,19 @@ class BotDusGuri(discord.ext.commands.Bot):
 	def get_gamelist(self, collection: pymongo.collection.Collection) -> gamelist.GameList:
 		"""
 		Returns the cached gamelist if the collection is the same from last request,
-		otherwise returns new gamelist
+		otherwise loads gamelist from database and returns it
 		"""
 
 		if collection == None:
 			return None
 
-		if self._cached_gamelist == None or self._cached_gamelist.collection.name != collection.name:
+		if not self._cached_gamelist or self._cached_gamelist.collection.name != collection.name:
 			self._cached_gamelist = gamelist.GameList(collection)
 		
 		return self._cached_gamelist
 
 	def guild_collection(self, guild: discord.Guild) -> pymongo.collection.Collection:
-		
-		if guild == None:
+		if not guild:
 			return None
 
 		return self.mongodb.get_collection(str(guild.id))
@@ -95,8 +88,7 @@ class BotDusGuri(discord.ext.commands.Bot):
 
 		# Utilidades
 		self.tree.add_command(commands.BrawlMetasCommand(self))
-		self.tree.add_command(commands.PogoRaidsCommand(self))
-		self.tree.add_command(commands.PogoResearchCommand(self))
+		self.tree.add_command(commands.PokegoCommand(self))
 		self.tree.add_command(commands.ClearCommand(self))
 
 		# Outros
@@ -120,6 +112,10 @@ class BotDusGuri(discord.ext.commands.Bot):
 
 	async def on_ready(self):
 		await self.sync_commands()
+
+		playing = discord.Game(f"v{self.config['version']} Online")
+		await self.change_presence(activity=playing, status=discord.Status.online)
+
 		print("Estou pronto!")
 
 	async def on_message(self, message: discord.Message):
@@ -135,3 +131,8 @@ class BotDusGuri(discord.ext.commands.Bot):
 		emoji = [':grinning:', ':smile:', ':grin:', ':wave:', ':call_me:'][random.randint(0, 4)]
 
 		await message.channel.send(f"{emoji} | {response}")
+
+	async def on_error(self, i: discord.Interaction, error: discord.app_commands.AppCommandError):
+
+		if isinstance(error, discord.app_commands.CheckFailure):
+			await i.response.send_message(":no_entry: | Você não tem permissão para executar este comando")

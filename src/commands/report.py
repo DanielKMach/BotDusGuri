@@ -1,6 +1,8 @@
 from discord import Embed, Interaction, TextStyle, User, app_commands, ui
 from bdg import BotDusGuri
 
+__all__ = [ "ReportModal", "ReportCommand" ]
+
 class ReportModal(ui.Modal, title="Reporte um bug"):
 
 	where = ui.TextInput(label="Como você encontrou esse bug?")

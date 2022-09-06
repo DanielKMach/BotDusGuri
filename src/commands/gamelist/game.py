@@ -14,40 +14,36 @@ class ViewGameCommand(app_commands.Command):
 	async def on_command(self, i: Interaction, nome_do_jogo: str):
 
 		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
+		game = gamelist[nome_do_jogo]
 
-		game_index = gamelist.index_of_closest(nome_do_jogo)
-		if game_index == None:
+		if not game:
 			await i.response.send_message(f"Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**", ephemeral=True)
 			return
 
-		name = gamelist.get_name(game_index)
 		game_embed = Embed(
-			title=name,
+			title=game.name,
 			color=0x00b934
 		)
 
 		# Definir icone no Embed
-		icon_url = gamelist.get_icon(game_index)
-		if type(icon_url) == str:
-			game_embed.set_thumbnail(url=icon_url)
+		if game.icon:
+			game_embed.set_thumbnail(url=game.icon)
 
 		# Definir fonte no Embed
-		source = gamelist.get_source(game_index)
-		if type(source) == str:
-			game_embed.url = source
+		if game.source:
+			game_embed.url = game.source
 
 		# Define quem adicionou o jogo no Embed
-		added_by_id = gamelist.get_added_by(game_index)
-		if added_by_id != None:
-			added_by = await self.bot.fetch_user(added_by_id)
+		if game.added_by:
+			added_by = await self.bot.fetch_user(game.added_by)
 			game_embed.set_footer(
 				icon_url=added_by.display_avatar,
 				text="Jogo adicionado por " + added_by.display_name
 			)
 
 		# Carrega as avaliações para o Embed
-		ratings = gamelist.get_ratings(game_index)
-		if len(ratings) != 0:
+		ratings = game.ratings
+		if len(ratings) > 0:
 			ratings_text = ""
 			for rating in ratings:
 				rating_author = await self.bot.fetch_user(rating['author'])
@@ -57,9 +53,9 @@ class ViewGameCommand(app_commands.Command):
 				ratings_text += "\n"
 
 			game_embed.add_field(
-				name=f":star: | Avaliações ({gamelist.get_rating_median(game_index)}/10)",
+				name=f":star: | Avaliações ({game.rating_median}/10)",
 				value=ratings_text,
 				inline=False
 			)
 
-		await i.response.send_message(f":bookmark_tabs: | Aqui estão algumas informações sobre **{name}**", embed=game_embed)
+		await i.response.send_message(f":bookmark_tabs: | Aqui estão algumas informações sobre **{game.name}**", embed=game_embed)
