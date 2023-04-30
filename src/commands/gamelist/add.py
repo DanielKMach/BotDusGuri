@@ -1,6 +1,6 @@
-from discord import Interaction, app_commands, ui
-from bdg import BotDusGuri
+from discord import Interaction, ui
 from gamelist import GameList
+import bdg
 
 class GameModal(ui.Modal, title="Adicionar um jogo"):
 
@@ -14,29 +14,26 @@ class GameModal(ui.Modal, title="Adicionar um jogo"):
 
 	async def on_submit(self, i: Interaction):
 		self.gamelist.create_game(
-			name= self.name.value,
-			icon_url= self.icon.value,
-			source= self.source.value,
-			added_by= i.user.id
+			name =     self.name.value,
+			icon_url = self.icon.value if len(self.icon.value) > 0 else None,
+			source =   self.source.value if len(self.source.value) > 0 else None,
+			added_by = i.user.id
 		)
 		self.gamelist.save_to_mongo()
 
 		await i.response.send_message(content=f":white_check_mark: | **{self.name.value}** adicionado com sucesso!", ephemeral=True)
 		self.stop()
 
-class AddGameCommand(app_commands.Command):
+class AddGameCommand(bdg.BdgCommand):
 
-	def __init__(self, bot: BotDusGuri):
-		self.bot = bot
-		super().__init__(
-			name= "adicionar_jogo",
-			description= "Lista de Jogos - Adicione um jogo à lista",
-			callback= self.on_command
-		)
+	header = {
+		'name': "adicionar_jogo",
+		'description': "Lista de Jogos - Adicione um jogo à lista",
+	}
 	
 	async def on_command(self, i: Interaction):
 
-		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
+		gamelist = self.bdg.get_gamelist(self.bdg.guild_collection(i.guild))
 		modal = GameModal(gamelist)
 
 		await i.response.send_modal(modal)

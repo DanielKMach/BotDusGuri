@@ -21,7 +21,7 @@ class DebugCommand(app_commands.Group, name="debug", description="Comando Debug.
 			return
 
 		if not isinstance(doc.get('_id'), str):
-			await i.response.send_message(":warning: | O documento necessita ter um atributo `_id` e ser do tipo `str`", ephemeral=True)
+			await i.response.send_message(":warning: | O documento necessita ter um atributo `id` e ser do tipo `str`", ephemeral=True)
 			return
 
 		id = doc['_id']
@@ -39,23 +39,24 @@ class DebugCommand(app_commands.Group, name="debug", description="Comando Debug.
 			return
 		
 		await i.response.send_message(f":white_check_mark: | O documento com o ID `{id}` foi salvo na coleção `{coll.name}` com sucesso!", ephemeral=True)
+		self.bot._cached_gamelist = None
 
 
 	@app_commands.command(name="exportar_mongo", description="Exporte um documento do banco de dados")
 	async def export_mongo(self, i: discord.Interaction, coleção: str, id: str):
 		try:
 			if not isinstance(id, str):
-				raise TypeError("'id' is not an instance of 'str'")
+				raise TypeError("'_id' is not an instance of 'str'")
 
 			coll = self.bot.mongodb[coleção]
-			doc = coll.find_one(id)
+			doc = coll.find_one({'_id': id})
 			if doc == None:
 				raise ValueError("Document not found")
 
 		except Exception as e:
 			await i.response.send_message(f":warning: | Houve um erro ao carregar o documento: `{e}`", ephemeral=True)
 			return
-		
+
 		await i.response.send_message(f":white_check_mark: | Aqui está o documento com o ID `{doc['_id']}`: ```json\n{json.dumps(doc)}```", ephemeral=True)
 
 

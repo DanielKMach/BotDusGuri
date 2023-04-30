@@ -1,15 +1,12 @@
 from discord import Interaction, app_commands
-from bdg import BotDusGuri
+import bdg
 
-class ClearCommand(app_commands.Command):
+class ClearCommand(bdg.BdgCommand):
 
-	def __init__(self, bot: BotDusGuri):
-		self.bot = bot
-		super().__init__(
-			name="limpar",
-			description="Exclua mensagens em sequência com este comando.",
-			callback=self.on_command
-		)
+	header = {
+		'name': "limpar",
+		'description': "Exclua mensagens em sequência com este comando."
+	}
 
 	@app_commands.checks.has_permissions(manage_messages=True)
 	async def on_command(self, i: Interaction, quantidade: app_commands.Range[int, 1, 100]):

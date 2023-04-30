@@ -1,5 +1,5 @@
 from discord import app_commands, ui, ButtonStyle, Interaction
-from bdg import BotDusGuri
+import bdg
 from random import randint
 
 class ChooseView(ui.View):
@@ -24,21 +24,22 @@ class ChooseView(ui.View):
 		self.stop()
 
 
-class ChooseCommand(app_commands.Command):
+class ChooseCommand(bdg.BdgCommand):
 
-	def __init__(self, bot: BotDusGuri):
-		self.bot = bot
-		super().__init__(
-			name="escolher",
-			description="Escolha entre 2 ou mais opções",
-			callback=self.on_command
-		)
+	header = {
+		'name': "escolher",
+		'description': "Escolha entre 2 ou mais opções",
+	}
+
+	params = {
+		'escolhas': "As opções de escolhas, separados por espaços."
+	}
 
 	async def on_command(self, i: Interaction, escolhas: str):
 
 		choices = escolhas.split(" ")
 
-		if len(choices) <= 1:
+		if len(choices) < 2:
 			await i.response.send_message(":warning: | Você precisa especificar 2 ou mais opções", ephemeral=True)
 			return
 

@@ -1,6 +1,5 @@
-from ast import For
-from discord import app_commands, Interaction
-from bdg import BotDusGuri
+from discord import Interaction
+import bdg
 import enum
 
 class FormatStyle(enum.Enum):
@@ -18,18 +17,14 @@ hacker_dict = {
 	"e": "3"
 }
 
-class FormatCommand(app_commands.Command):
+class FormatCommand(bdg.BdgCommand):
 
-	def __init__(self, bot: BotDusGuri):
-		self.bot = bot
-		super().__init__(
-			name= "formatar",
-			description= "Formate um texto de acordo com o estilo selecionado",
-			callback= self.on_command
-		)
+	header = {
+		'name': "formatar",
+		'description': 'Formate um texto de acordo com o estilo selecionado'
+	}
 
 	async def on_command(self, i: Interaction, estilo: FormatStyle, texto: str):
-
 		text = ""
 
 		if estilo == FormatStyle.UPPER:
@@ -53,7 +48,7 @@ class FormatCommand(app_commands.Command):
 			text = "".join([hacker_dict.get(char.lower(), char) for char in texto])
 
 		elif estilo == FormatStyle.IRONIC:
-			# Se 'c' for par char é maiúsculo, senão é minúsculo
+			# Se 'c' for par é maiúsculo, senão é minúsculo
 			for c in range(len(texto)):
 				char = texto[c]
 				text += char.upper() if c % 2 else char.lower()

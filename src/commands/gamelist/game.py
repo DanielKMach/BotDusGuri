@@ -1,26 +1,23 @@
-from discord import Interaction, Embed, app_commands
-from bdg import BotDusGuri
+import discord
+import bdg
 
-class ViewGameCommand(app_commands.Command):
+class ViewGameCommand(bdg.BdgCommand):
 
-	def __init__(self, bot: BotDusGuri):
-		self.bot = bot
-		super().__init__(
-			name= "ver_jogo",
-			description= "Lista de Jogos - Veja os detalhes de um jogo com este comando",
-			callback= self.on_command
-		)
+	header = {
+		'name': "ver_jogo",
+		'description': "Lista de Jogos - Veja os detalhes de um jogo com este comando"
+	}
 
-	async def on_command(self, i: Interaction, nome_do_jogo: str):
+	async def on_command(self, i: discord.Interaction, nome_do_jogo: str):
 
-		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
+		gamelist = self.bdg.get_gamelist(self.bdg.guild_collection(i.guild))
 		game = gamelist[nome_do_jogo]
 
 		if not game:
 			await i.response.send_message(f"Não foi possível encontrar um jogo com o nome **{nome_do_jogo}**", ephemeral=True)
 			return
 
-		game_embed = Embed(
+		game_embed = discord.Embed(
 			title=game.name,
 			color=0x00b934
 		)
@@ -35,21 +32,22 @@ class ViewGameCommand(app_commands.Command):
 
 		# Define quem adicionou o jogo no Embed
 		if game.added_by:
-			added_by = await self.bot.fetch_user(game.added_by)
+			added_by = await self.bdg.fetch_user(game.added_by)
 			game_embed.set_footer(
 				icon_url=added_by.display_avatar,
 				text="Jogo adicionado por " + added_by.display_name
 			)
 
 		# Carrega as avaliações para o Embed
-		ratings = game.ratings
-		if len(ratings) > 0:
+		reviews = game.reviews
+		if len(reviews) > 0:
 			ratings_text = ""
-			for rating in ratings:
-				rating_author = await self.bot.fetch_user(rating['author'])
-				ratings_text += f"{rating_author.mention} - `{rating['rating']}/10`"
-				if rating.get('opinion', None) != None:
-					ratings_text += f" *\"{rating['opinion']}\"*"
+			for review in reviews:
+				rating_author = await self.bdg.fetch_user(int(review.author))
+				ratings_text += f"{rating_author.mention} - `{review.rating}/10`"
+				if review.opinion:
+					ratings_text += f" *\"{review.opinion}\"*"
+				
 				ratings_text += "\n"
 
 			game_embed.add_field(

@@ -15,16 +15,16 @@ class VoiceJoinCog(commands.Cog, name='VoiceJoin'):
 		if after.channel == None or before.channel != None and before.channel.id == after.channel.id:
 			return
 
-		document = self.bot.guild_collection(member.guild).find_one({"_id": "voice_join"})
+		document = self.bot.guild_collection(member.guild).find_one({'_id': "voice_join"})
 		if document == None: return
 
-		nodes = []
+		nodes: list[dict] = []
 
-		if type(document.get('nodes')) == list:
-			nodes = document['nodes']
+		if isinstance(n := document.get('nodes'), list):
+			nodes = n
 
-		elif type(document.get('nodes')) == dict:
-			nodes.append(document['nodes'])
+		if isinstance(n := document.get('nodes'), dict):
+			nodes.append(n)
 
 		else:
 			nodes.append(document)
@@ -35,10 +35,10 @@ class VoiceJoinCog(commands.Cog, name='VoiceJoin'):
 		# Loopar pelas configurações
 		for node in nodes:
 			for channel_id in node.get("voice_channels", []):
-				if after.channel.id != channel_id:
+				if after.channel.id != int(channel_id):
 					continue
 
-				notification_channel = self.bot.get_channel(node.get("notification_channel", None))
+				notification_channel = self.bot.get_channel(int(node.get("notification_channel", 0)))
 				template_message = node.get("message", "&user_nick entrou no canal de voz")
 
 		if notification_channel == None:

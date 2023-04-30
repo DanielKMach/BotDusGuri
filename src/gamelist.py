@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 import pymongo.collection
 import difflib
 import enum
@@ -20,113 +19,153 @@ filterFunctions = {
 	lambda g, i: g.get_rating_median(i) <= 5,
 }
 
-class Game:
-	def __init__(self):
-		self._name: str = "Undefined"
-		self._source: str = None
-		self._icon: str = None
-		self._added_by: int = None
+class Review:
 
-		self._ratings: list[dict[str, any]] = []
+	_author: int   = 0
+	_rating: float = 0
+	_opinion: str | None = None
+	
+	@property
+	def author(self) -> int:
+		return self._author
+	
+	@author.setter
+	def author(self, value: int):
+		self._author = value
+	
+	@property
+	def rating(self) -> float:
+		return self._rating
+	
+	@rating.setter
+	def rating(self, value: float):
+		self._rating = min(max(round(value, 1), 0), 10)
+	
+	@property
+	def opinion(self) -> str | None:
+		return self._opinion
+	
+	@opinion.setter
+	def opinion(self, value: str | None):
+		self._opinion = value
+
+
+	def __init__(self, **kwargs):
+		self.set(**kwargs)
+
+	def set(self, **kwargs):
+		if isinstance(a := kwargs.get('author'), (str, int)):   self.author  = int(a)
+		if isinstance(b := kwargs.get('rating'), (float, int)): self.rating  = b
+		if isinstance(c := kwargs.get('opinion'), str):         self.opinion = c
+
+	def get(self) -> dict:
+		return {
+			'author':  str(self.author),
+			'rating':  self.rating,
+			'opinion': self.opinion
+		}
+
+class Game:
+
+	_name: str          = "Undefined"
+	_source: str | None = None
+	_icon: str | None   = None
+	_added_by: int      = 0
+	_reviews: list[Review] = []
 
 	@property
-	def name(self):
+	def name(self) -> str:
 		return self._name
 
 	@property
-	def source(self):
+	def source(self) -> str | None:
 		return self._source
 
 	@property
-	def icon(self):
+	def icon(self) -> str | None:
 		return self._icon
 
 	@property
-	def added_by(self):
+	def added_by(self) -> int:
 		return self._added_by
 
 	@property
-	def ratings(self) -> list[dict[str, any]]:
-		return self._ratings
+	def reviews(self) -> list[Review]:
+		return self._reviews
 
 	@property
 	def rating_median(self) -> float | None:
-		if len(self.ratings) == 0:
+		if not self.has_been_rated:
 			return
 
 		sum = 0
-		for r in self.ratings:
-			sum += r['rating']
+		for rating in self.reviews:
+			sum += rating.rating
 
-		return sum / len(self.ratings)
+		return sum / len(self.reviews)
 
 	@property
 	def has_been_rated(self) -> bool:
-		return len(self.ratings > 1)
+		return len(self.reviews) > 0
 
-	def rate(self, *, author: int, rating: float, opinion: str = None):
-		
-		if not isinstance(author, int): raise TypeError("'author_id' must be an instance of type 'int'")
-		if not isinstance(rating, float): raise TypeError("'rating' must be an instance of type 'float'")
-		
-		rating_obj = {
-			'rating': max(min(rating, 10), 0), # clamp(rating, 0, 10)
-			'author': author
-		}
-		if isinstance(opinion, str):
-			rating_obj['opinion'] = opinion
 
-		author_rating = self.get_user_rating(author)
-		if author_rating != None:
-			self.ratings[author_rating] = rating_obj
+	def __init__(self, **kwargs):
+		self.set(**kwargs)
+
+	def review(self, *, author: int, rating: float, opinion: str = None):
+		review = Review(
+			author = author,
+			rating = rating,
+			opinion = opinion
+		)
+
+		overwrite_review_index = self.index_of_user_rating(author)
+
+		if overwrite_review_index != None:
+			self.reviews[overwrite_review_index] = review
 		else:
-			self.ratings.append(rating_obj)
+			self.reviews.append(review)
 
-	def get_user_rating(self, author_id) -> int | None:
-		for r in range(len(self.ratings)):
-			rating = self.ratings[r]
-			if rating.get('author') and rating['author'] == author_id:
-				return r
 
-	def from_dict(self, dic: dict[str, any], /):
-		if not dic.get('name'): raise ValueError("'jsonobj' must have an attribute 'name'")
-		if not isinstance(dic['name'], str): raise TypeError("'name' attribute must be an instance of type 'str'")
+	def index_of_user_rating(self, author_id: int) -> int | None:
+		for i in range(len(self.reviews)):
+			rating = self.reviews[i]
+			if rating.author == author_id:
+				return i
 
-		self._name = dic['name']
+	def set(self, **kwargs):
+		if isinstance(a := kwargs.get('name'), str):            self._name = a
+		if isinstance(b := kwargs.get('source'), str):          self._source = b
+		if isinstance(c := kwargs.get('icon'), str):            self._icon = c
+		if isinstance(d := kwargs.get('added_by'), (str, int)): self._added_by = int(d)
+		if isinstance(e := kwargs.get('reviews'), list):        self._reviews  = list(Review(**rate) for rate in e)
 
-		if isinstance(dic.get('source'), str):   self._source = dic['source']
-		if isinstance(dic.get('icon'), str):     self._icon = dic['icon']
-		if isinstance(dic.get('added_by'), int): self._added_by = dic['added_by']
-		if isinstance(dic.get('ratings'), list): self._ratings = dic['ratings']
-
-	def to_dict(self) -> dict[str, any]:
-		dic = {}
-		if self._name != None: dic['name'] = self._name
-		if self._source != None: dic['source'] = self._source
-		if self._icon != None: dic['icon'] = self._icon
-		if self._added_by != None: dic['added_by'] = self._added_by
-		if self._ratings != None: dic['ratings'] = self._ratings
-
-		return dic
-
+	def get(self) -> dict:
+		return {
+			'name':     self.name,
+			'added_by': str(self.added_by),
+			'reviews':  list(rate.get() for rate in self.reviews),
+			'icon':     self.icon,
+			'source':   self.source
+		}
 
 class GameList:
 
-	def __init__(self, mongo_collection: pymongo.collection.Collection):
-		self._games: list[Game] = None
-		self._collection: pymongo.collection.Collection = None
-		self._document_id: str = None
-
-		self._collection = mongo_collection
-		self.load_from_mongo()
+	_games: list[Game] = []
+	_collection: pymongo.collection.Collection | None = None
 
 	@property
-	def games(self):
+	def games(self) -> list[Game]:
 		return self._games
 
 	@property
-	def collection(self):
+	def collection(self) -> pymongo.collection.Collection | None:
 		return self._collection
+	
+
+	def __init__(self, mongo_collection: pymongo.collection.Collection):
+		self._collection = mongo_collection
+		self.load_from_mongo()
 
 	def __getitem__(self, i: int | str) -> Game | None:
 		if isinstance(i, int):
@@ -139,19 +178,21 @@ class GameList:
 
 		raise TypeError("'i' must be an instance of type 'int' or 'str'")
 
+	def __len__(self) -> int:
+		return len(self.games)
+	
+
 	def create_game(self, name: str, *, source: str = None, icon_url: str = None, added_by: int = None) -> Game:
 
 		if not isinstance(name, str):
 			raise TypeError("'name' must be an instance of type 'str'")
 		
-		game = Game()
-
-		game.from_dict({
-			'name': name,
-			'source': source,
-			'icon': icon_url,
-			'added_by': added_by
-		})
+		game = Game(
+			name=name,
+			source=source,
+			icon=icon_url,
+			added_by=added_by
+		)
 
 		self.games.append(game)
 		return game
@@ -185,33 +226,33 @@ class GameList:
 				yield i
 
 	# JSON related functions
-	def from_dict(self, dic: dict[str, any], /):
-		dgames = dic.get('games')
-		if dgames == None: raise ValueError("'dic' must have an attribute 'games'")
-		if not isinstance(dgames, list): raise TypeError("'games' attribute must be an instance of type 'list'")
+	def load(self, dic: dict[str, any], /):
+		games = dic.get('games')
+		if games == None: raise ValueError("'dic' must have an attribute 'games'")
+		if not isinstance(games, list): raise TypeError("'games' attribute must be an instance of type 'list'")
 
 		self._games = []
-		for dgame in dgames:
-			if isinstance(dgame, dict):
-				game = Game()
-				game.from_dict(dgame)
-				self.games.append(game)
+		for game in games:
+			if isinstance(game, dict):
+				self.games.append(Game(**game))
 
 		self.sort()
 
-	def to_dict(self) -> dict[str, any]:
+	def save(self) -> dict[str, any]:
 		self.sort()
 
-		return { 'games': [ game.to_dict() for game in self.games ] }
+		return { 'games': [ game.get() for game in self.games ] }
 
 	def save_to_mongo(self):
 		print(f"Salvando gamelist para a coleção '{self.collection.name}'...")
 
-		dic = self.to_dict()
+		dic = self.save()
+
+		print(dic)
 
 		self.collection.update_one(
-			{"_id": "games"},
-			{"$set": dic},
+			{'_id': 'games'},
+			{'$set': dic},
 			upsert=True
 		)
 
@@ -221,7 +262,4 @@ class GameList:
 		if doc == None:
 			doc = {'_id': 'games', 'games': []}
 
-		self.from_dict(doc)
-
-	def __len__(self) -> int:
-		return len(self.games)
+		self.load(doc)

@@ -23,6 +23,8 @@ def download_graphic(leekduck: str) -> discord.File | None:
 
 class PokegoCommand(discord.app_commands.Group, name="pokego", description="Últimas notícias do Pokemon GO"):
 
+	bot: bdg.BotDusGuri
+
 	def __init__(self, bot: bdg.BotDusGuri):
 		self.bot = bot
 		super().__init__()

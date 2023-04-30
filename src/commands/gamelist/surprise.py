@@ -1,22 +1,18 @@
-from discord import app_commands
 import discord
 import bdg
 import gamelist
 import random
 
-class SurpriseGameCommand(app_commands.Command):
+class SurpriseGameCommand(bdg.BdgCommand):
 
-	def __init__(self, bot: bdg.BotDusGuri):
-		self.bot = bot
-		super().__init__(
-			name="sortear_jogo",
-			description="Lista de Jogos - Sorteie um jogo aleatório baseado no filtro especificado",
-			callback=self.on_command
-		)
+	header = {
+		'name': "sortear_jogo",
+		'description': "Lista de Jogos - Sorteie um jogo aleatório baseado no filtro especificado",
+	}
 
 	async def on_command(self, i: discord.Interaction, filtro: gamelist.GameFilter):
 
-		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
+		gamelist = self.bdg.get_gamelist(self.bdg.guild_collection(i.guild))
 
 		available_games = [ g for g in gamelist.filter(filtro) ]
 

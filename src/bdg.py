@@ -1,26 +1,31 @@
 import discord
 import discord.ext.commands
 import pymongo.collection
+import pymongo.database
 import pymongo.errors
 import gamelist
 import random
 
 class BotDusGuri(discord.ext.commands.Bot):
 
+	_cached_gamelist: gamelist.GameList | None = None
+	_config: dict[str, any] | None             = None
+	_mongo_client: pymongo.MongoClient | None  = None
+	_mongodb: pymongo.database.Database | None = None
+
 	def __init__(self):
 		super().__init__(command_prefix="\\", intents=discord.Intents.all())
-		self._cached_gamelist = None
 
 	@property
-	def config(self):
+	def config(self) -> dict | None:
 		return self._config
 	
 	@property
-	def mongo_client(self):
+	def mongo_client(self) -> pymongo.MongoClient | None:
 		return self._mongo_client
 	
 	@property
-	def mongodb(self):
+	def mongodb(self) -> pymongo.database.Database | None:
 		return self._mongodb
 
 
@@ -39,13 +44,13 @@ class BotDusGuri(discord.ext.commands.Bot):
 
 		print(f"Config carregado.")
 
-	def connect_to_mongo(self, mongo_uri: str):
+	def connect_to_mongo(self, mongo_url: str):
 		print("Conectando ao banco de dados...")
 
 		from pymongo import MongoClient
 
-		if mongo_uri != None and mongo_uri != "":
-			self._mongo_client = MongoClient(mongo_uri)
+		if mongo_url != None and mongo_url != "":
+			self._mongo_client = MongoClient(mongo_url)
 			self._mongodb = self._mongo_client["BotDusGuri"]
 
 	def get_gamelist(self, collection: pymongo.collection.Collection) -> gamelist.GameList:
@@ -90,6 +95,7 @@ class BotDusGuri(discord.ext.commands.Bot):
 		self.tree.add_command(commands.BrawlMetasCommand(self))
 		self.tree.add_command(commands.PokegoCommand(self))
 		self.tree.add_command(commands.ClearCommand(self))
+		#self.tree.add_command(commands.PoolCommand(self))
 
 		# Outros
 		self.tree.add_command(commands.ReportCommand(self))
@@ -121,18 +127,47 @@ class BotDusGuri(discord.ext.commands.Bot):
 	async def on_message(self, message: discord.Message):
 		if not self.user in message.mentions: return
 
-		response = [
+		response = random.choice(
 			"Olá! Como posso ajudar?",
 			"Oi! Gostaria da minha ajuda?",
 			"Me chamou?",
 			"Olá mundo!"
-		][random.randint(0, 3)]
+		)
 
 		emoji = [':grinning:', ':smile:', ':grin:', ':wave:', ':call_me:'][random.randint(0, 4)]
 
 		await message.channel.send(f"{emoji} | {response}")
 
 	async def on_error(self, i: discord.Interaction, error: discord.app_commands.AppCommandError):
-
 		if isinstance(error, discord.app_commands.CheckFailure):
 			await i.response.send_message(":no_entry: | Você não tem permissão para executar este comando")
+
+
+class BdgCommand(discord.app_commands.Command):
+
+	_bdg: BotDusGuri
+
+	header = {
+		'name': "undefined",
+		'description': ""
+	}
+
+	params = {}
+
+	def __init__(self, bot: BotDusGuri):
+		self._bdg = bot
+
+		super().__init__(
+			callback=self.on_command,
+			**self.header
+		)
+
+		if len(self.params) > 0:
+			discord.app_commands.commands._populate_descriptions(self._params, self.params)
+
+	@property
+	def bdg(self):
+		return self._bdg
+
+	async def on_command(self, interaction: discord.Interaction):
+		raise NotImplementedError(self.__class__, " needs to implement method 'BdgCommand.run()' ")

@@ -1,19 +1,16 @@
-from discord import Interaction, app_commands
-from bdg import BotDusGuri
+from discord import Interaction
+import bdg
 
-class RemoveGameCommand(app_commands.Command):
+class RemoveGameCommand(bdg.BdgCommand):
 
-	def __init__(self, bot: BotDusGuri):
-		self.bot = bot
-		super().__init__(
-			name= "remover_jogo",
-			description= "Lista de Jogos - Remova um jogo da lista",
-			callback= self.on_command
-		)
+	header = {
+		'name': "remover_jogo",
+		'description': "Lista de Jogos - Remova um jogo da lista",
+	}
 	
 	async def on_command(self, i: Interaction, nome_do_jogo: str):
 
-		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
+		gamelist = self.bdg.get_gamelist(self.bdg.guild_collection(i.guild))
 
 		index = gamelist.index_of(nome_do_jogo)
 		if index == None:

@@ -1,16 +1,13 @@
-import bdg
 from discord import app_commands, Interaction
 import random
+import bdg
 
-class RollCommand(app_commands.Command):
+class RollCommand(bdg.BdgCommand):
 
-	def __init__(self, bot: bdg.BotDusGuri):
-		self.bot = bot
-		super().__init__(
-			name= "roleta",
-			description= "Um número aleatório entre o mínimo e o máximo",
-			callback= self.on_command
-		)
+	header = {
+		'name': "roleta",
+		'description': "Um número aleatório entre o mínimo e o máximo"
+	}
 
 	@app_commands.describe(
 		mínimo="Valor mínimo a ser sorteado",

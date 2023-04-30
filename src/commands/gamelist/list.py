@@ -1,24 +1,20 @@
 from discord import Interaction, Embed, app_commands
-from bdg import BotDusGuri
+import bdg
 
-class ListGamesCommand(app_commands.Command):
+class ListGamesCommand(bdg.BdgCommand):
 
-	def __init__(self, bot: BotDusGuri):
-		self.bot = bot
-		super().__init__(
-			name= "lista_de_jogos",
-			description= "Lista de Jogos - Visualize a lista de jogos disponiveis para jogar",
-			callback= self.on_command
-		)
-
+	header = {
+		'name': "lista_de_jogos",
+		'description': "Lista de Jogos - Visualize a lista de jogos disponiveis para jogar",
+	}
 	
 	async def on_command(self, i: Interaction):
 
-		gamelist = self.bot.get_gamelist(self.bot.guild_collection(i.guild))
+		gamelist = self.bdg.get_gamelist(self.bdg.guild_collection(i.guild))
 
 		names = [ game.name for game in gamelist.games ]
 		medians = [ game.rating_median for game in gamelist.games ]
-		rated = [ game.get_user_rating(i.user.id) != None for game in gamelist.games ]
+		rated = [ game.index_of_user_rating(i.user.id) != None for game in gamelist.games ]
 
 		if len(names) == 0:
 			await i.response.send_message(":cricket: | Não há jogos na lista", ephemeral=True)
