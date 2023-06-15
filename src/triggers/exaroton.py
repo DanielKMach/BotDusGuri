@@ -17,7 +17,7 @@ class ExarotonCog(discord.ext.commands.Cog, name="exaroton"):
 		for guild in self.bot.guilds:
 			collection = self.bot.guild_collection(guild)
 			document = collection.find_one({'_id': 'exaroton'})
-			if document != None or not document.get('active', True):
+			if document == None or not document.get('active', True):
 				continue
 
 			try:
