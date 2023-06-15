@@ -1,14 +1,14 @@
-from discord import Member, VoiceState
-from discord.ext import commands
-from bdg import BotDusGuri
+import discord
+import discord.ext.commands
+import bdg
 
-class VoiceJoinCog(commands.Cog, name='VoiceJoin'):
+class VoiceJoinCog(discord.ext.commands.Cog, name='VoiceJoin'):
 
-	def __init__(self, bot: BotDusGuri):
+	def __init__(self, bot: bdg.BotDusGuri):
 		self.bot = bot
 
-	@commands.Cog.listener()
-	async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
+	@discord.ext.commands.Cog.listener()
+	async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
 
 		# Se o usuário saiu do canal OU se moveu de canal E é o mesmo canal que antes, retorne
 		# Resumindo.. continue o código se o usuário entrou em um canal de voz
@@ -16,7 +16,8 @@ class VoiceJoinCog(commands.Cog, name='VoiceJoin'):
 			return
 
 		document = self.bot.guild_collection(member.guild).find_one({'_id': "voice_join"})
-		if document == None: return
+		if document == None or not document.get('active', True):
+			return
 
 		nodes: list[dict] = []
 

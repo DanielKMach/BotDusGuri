@@ -107,6 +107,7 @@ class BotDusGuri(discord.ext.commands.Bot):
 		import triggers
 
 		await self.add_cog(triggers.VoiceJoinCog(self))
+		await self.add_cog(triggers.ExarotonCog(self))
 
 	async def sync_commands(self):
 		await self.tree.sync()
@@ -137,8 +138,8 @@ class BotDusGuri(discord.ext.commands.Bot):
 		emoji = [':grinning:', ':smile:', ':grin:', ':wave:', ':call_me:'][random.randint(0, 4)]
 
 		await message.channel.send(f"{emoji} | {response}")
-
-	async def on_error(self, i: discord.Interaction, error: discord.app_commands.AppCommandError):
+	
+	async def on_command_error(self, i: discord.Interaction, error: discord.app_commands.AppCommandError):
 		if isinstance(error, discord.app_commands.CheckFailure):
 			await i.response.send_message(":no_entry: | Você não tem permissão para executar este comando")
 

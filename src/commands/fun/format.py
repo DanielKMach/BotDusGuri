@@ -21,7 +21,12 @@ class FormatCommand(bdg.BdgCommand):
 
 	header = {
 		'name': "formatar",
-		'description': 'Formate um texto de acordo com o estilo selecionado'
+		'description': "Formate um texto de acordo com o estilo selecionado"
+	}
+
+	params = {
+		'estilo': "O estilo do texto, podendo ser: UPPER, LOWER, REVERSED, SPACED, HACKER, IRONIC",
+		'texto': "O texto a ser formatado no estilo indicado"
 	}
 
 	async def on_command(self, i: Interaction, estilo: FormatStyle, texto: str):

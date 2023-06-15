@@ -8,6 +8,10 @@ class ClearCommand(bdg.BdgCommand):
 		'description': "Exclua mensagens em sequência com este comando."
 	}
 
+	params = {
+		'quantidade': "A quantidade de mensagens que você deseja limpar"
+	}
+
 	@app_commands.checks.has_permissions(manage_messages=True)
 	async def on_command(self, i: Interaction, quantidade: app_commands.Range[int, 1, 100]):
 
