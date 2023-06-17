@@ -8,13 +8,17 @@ import random
 
 class BotDusGuri(discord.ext.commands.Bot):
 
-	_cached_gamelist: gamelist.GameList | None = None
-	_config: dict[str, any] | None             = None
-	_mongo_client: pymongo.MongoClient | None  = None
-	_mongodb: pymongo.database.Database | None = None
+	
 
 	def __init__(self):
 		super().__init__(command_prefix="\\", intents=discord.Intents.all())
+
+		self._cached_gamelist: gamelist.GameList | None = None
+		self._config: dict[str, any] | None             = None
+		self._mongo_client: pymongo.MongoClient | None  = None
+		self._mongodb: pymongo.database.Database | None = None
+
+		self._has_started = False
 
 	@property
 	def config(self) -> dict | None:
@@ -117,13 +121,24 @@ class BotDusGuri(discord.ext.commands.Bot):
 		print("Comandos sincronizados!")
 
 
-	async def on_ready(self):
+	async def on_start(self):
 		await self.sync_commands()
 
 		playing = discord.Game(f"v{self.config['version']} Online")
 		await self.change_presence(activity=playing, status=discord.Status.online)
 
-		print("Estou pronto!")
+		for cog in self.cogs.values():
+			if hasattr(cog, 'on_start'):
+				await cog.on_start()
+
+		print("Bot inicializado!")
+
+	async def on_ready(self):
+		if not self._has_started:
+			await self.on_start()
+			self._has_started = True
+
+		print("Pronto!")
 
 	async def on_message(self, message: discord.Message):
 		if not self.user in message.mentions: return

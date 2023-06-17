@@ -1,3 +1,4 @@
+import asyncio
 import requests
 import discord
 import discord.ext.commands
@@ -11,8 +12,7 @@ class ExarotonCog(discord.ext.commands.Cog, name="exaroton"):
 		self.bot = bot
 		self.sockets: list[Exaroton] = []
 
-	@discord.ext.commands.Cog.listener()
-	async def on_ready(self):
+	async def on_start(self):
 
 		for guild in self.bot.guilds:
 			collection = self.bot.guild_collection(guild)
@@ -108,12 +108,25 @@ class Exaroton:
 		self.event_names = self.events.keys()
 
 	async def start(self):
-		async with websockets.client.connect(self.websocket_url, extra_headers=self.url_headers) as websocket:
-			while True:
-				try:
-					await self._on_message(await websocket.recv())
-				except websockets.ConnectionClosed:
-					continue
+		reconnection_attempts = 0
+
+		while reconnection_attempts < 5:
+			try:
+				async with websockets.client.connect(self.websocket_url, extra_headers=self.url_headers) as websocket:
+
+					if reconnection_attempts > 0:
+						reconnection_attempts = 0
+						print(f"Conexão à '{self.name}' reaberta com exito")
+
+					async for data in websocket:
+						await self._on_message(data)
+
+			except websockets.ConnectionClosed:
+				print(f"Conexão à '{self.name}' fachada. Tentando reconexão...")
+				reconnection_attempts += 1
+				await asyncio.sleep(5)
+
+		print(f"\033[91mFalha ao reconectar à '{self.name}'\033[0m")
 
 	async def _on_message(self, message):
 		content = json.loads(message)
