@@ -30,24 +30,16 @@ class VoiceJoinCog(discord.ext.commands.Cog, name='VoiceJoin'):
 		else:
 			nodes.append(document)
 		
-		notification_channel = None
-		template_message = ""
 
 		# Loopar pelas configurações
 		for node in nodes:
-			for channel_id in node.get("voice_channels", []):
-				if after.channel.id != int(channel_id):
-					continue
-
+			if node.get('inverted', False) != (str(after.channel.id) in node.get("voice_channels", [])):
 				notification_channel = self.bot.get_channel(int(node.get("notification_channel", 0)))
-				template_message = node.get("message", "&user_nick entrou no canal de voz")
+				message: str = node.get("message", "&user_nick entrou no canal de voz")
 
-		if notification_channel == None:
-			return
+				message = message.replace("&user_nick", member.display_name)
+				message = message.replace("&user_name", member.name)
+				message = message.replace("&user_mention", member.mention)
+				message = message.replace("&voice_channel", after.channel.name)
 
-		template_message = template_message.replace("&user_nick", member.display_name)
-		template_message = template_message.replace("&user_name", member.name)
-		template_message = template_message.replace("&user_mention", member.mention)
-		template_message = template_message.replace("&voice_channel", after.channel.name)
-
-		await notification_channel.send(template_message)
+				await notification_channel.send(message)
