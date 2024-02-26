@@ -47,11 +47,13 @@ class ChooseCommand(bdg.BdgCommand):
 			chosen = choices[randint(0, len(choices) - 1)]
 
 			view = ui.View()
-			msg = f":slot_machine: | O escolhido foi... **{chosen}**!"
+			msg = f":slot_machine: | O escolhido foi... **{chosen}**"
 
 			if len(choices) > 1:
 				view = ChooseView()
-				msg += f"\n*...de {len(choices)} itens.*"
+				msg += f" *...de {len(choices)} itens.*"
+			else:
+				msg += '!'
 
 			followup_msg = None
 			if not i.response.is_done():
